@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.4 - 2026-11-06
+
+### Fixed
+
+- The pre-commit hook linted staged files under `.scions/`. It passes staged paths to `markdownlint-cli2` by name,
+  which bypasses the `.scions/**` ignore, so any commit that staged the scion failed on the kit's seed files,
+  whose links resolve only inside a workspace. That includes a workspace's first commit and every graft upgrade.
+  The hook now leaves `.scions/` out.
+- The seed pins this release.
+
+### Upgrading
+
+Nothing to change by hand: the hook runs from the scion, so `nix run .#graft upgrade` applies the fix. Done when a
+commit that stages `.scions/` passes the hook. If a commit was made with `--no-verify` to get past this, nothing
+needs redoing.
+
 ## v0.1.3 - 2026-11-06
 
 ### Changed

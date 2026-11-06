@@ -116,6 +116,23 @@ class SeedTest(unittest.TestCase):
         proc = subprocess.run([str(wrapper)], cwd=self.root, capture_output=True, text=True)
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)  # no staged Markdown: exits 0
 
+    def test_hook_skips_staged_scion_markdown(self):
+        # Explicit paths bypass markdownlint's ignores, so the hook must not pass .scions/ files at all:
+        # the scion's seed links resolve only inside a workspace, and every graft upgrade stages .scions/.
+        stubs = self.root / ".stubs"
+        stubs.mkdir()
+        record = self.root / ".lint-args"
+        (stubs / "markdownlint-cli2").write_text(f'#!/bin/sh\nprintf "%s\\n" "$@" > "{record}"\n')
+        (stubs / "nix").write_text("#!/bin/sh\nexit 0\n")
+        for stub in stubs.iterdir():
+            stub.chmod(0o755)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.root, check=True)
+        subprocess.run(["git", "add", "README.md", ".scions/notebook-conventions/README.md"], cwd=self.root, check=True)
+        proc = subprocess.run([str(self.root / ".githooks/pre-commit")], cwd=self.root, capture_output=True,
+                              text=True, env={**os.environ, "PATH": f"{stubs}{os.pathsep}{os.environ['PATH']}"})
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        self.assertEqual(["--no-globs", "README.md"], record.read_text().split())
+
     def test_skill_files_are_loadable(self):
         for skill in (self.root / ".scions/notebook-conventions/skills").glob("*/SKILL.md"):
             head = skill.read_text().split("---")[1]
