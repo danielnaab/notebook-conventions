@@ -17,6 +17,7 @@ place, and copies a small `seed/` once.
 | [tools/](tools/) | `check-tasks`, `check-kb`, `check-templates`, and a pre-commit hook. |
 | [nix/workspace.nix](nix/workspace.nix) | Flake wiring: dev shell, check apps, task check. |
 | [seed/](seed/common/) | Files a workspace copies once and then owns. |
+| [LICENSE](LICENSE) | CC0 1.0 Universal. |
 | [tests/](tests/) | Tool tests and a test that builds a workspace from the seed and runs every check. |
 
 ## Use it
@@ -42,6 +43,11 @@ nix run .#check-kb       # links, status, and Sources in this repository
 ```
 
 Requires Nix with flakes. See [AGENTS.md](AGENTS.md) for the rules for changing this repository.
+
+## License
+
+[CC0 1.0 Universal](LICENSE): public-domain dedication; use, copy, and adapt freely, with no attribution required.
+The license file is exported with the scion, so every workspace that pins the kit carries it.
 
 ## Sources
 

@@ -41,6 +41,6 @@ rules:
   provenance:
     requiredFor: [operational-guidance]
   writes:
-    allow: [docs/**, templates/**, skills/**, tools/**, nix/**, seed/**, tests/**, README.md, CHANGELOG.md]
+    allow: [docs/**, templates/**, skills/**, tools/**, nix/**, seed/**, tests/**, README.md, CHANGELOG.md, LICENSE]
     deny: [secrets/**, credentials/**, .env, .env.*, "**/*.key", "**/*.pem", .scions/**, .git/**, .direnv/**]
     askFirst: [AGENTS.md, knowledge-base.yaml, flake.nix, flake.lock, .gitattributes, .gitignore]

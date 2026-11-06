@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.2 - 2026-11-06
+
+### Added
+
+- A [CC0 1.0 Universal](LICENSE) license. It is exported with the scion.
+
+### Upgrading
+
+Nothing to change. A workspace that redistributes this kit's content should keep the `LICENSE` file with it.
+
 ## v0.1.1 - 2026-11-06
 
 ### Fixed
