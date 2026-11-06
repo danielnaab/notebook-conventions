@@ -1,0 +1,46 @@
+apiVersion: meta-kb/v1
+name: notebook-conventions
+description: "Conventions, tools, skills, and a starter seed for Markdown work-memory workspaces."
+
+entrypoints:
+  human: README.md
+  agent: AGENTS.md
+
+imports:
+  - kind: local
+    path: .scions/meta-knowledge-base
+    relationship: foundational
+    sync_policy: extend
+
+paths:
+  docs: docs
+  templates: templates
+
+sources:
+  canonical:
+    - path: docs/**
+      note: "The conventions are the product; docs are canonical for them."
+    - path: tools/**
+      note: "Tool behavior is defined by the code and its tests."
+  interpretation:
+    - path: README.md
+      note: "Orientation."
+
+rules:
+  # Scopes for knowledge-base-integrity. seed/ holds placeholders and links that only resolve inside a
+  # workspace; tests/test_seed.py builds one and runs the checks there.
+  checks:
+    links:
+      include: [README.md, AGENTS.md, CHANGELOG.md, docs/**, skills/**]
+    lifecycle:
+      include: [docs/**]
+    provenance:
+      include: [docs/**]
+  lifecycle:
+    statuses: [draft, working, stable, deprecated]
+  provenance:
+    requiredFor: [operational-guidance]
+  writes:
+    allow: [docs/**, templates/**, skills/**, tools/**, nix/**, seed/**, tests/**, README.md, CHANGELOG.md]
+    deny: [secrets/**, credentials/**, .env, .env.*, "**/*.key", "**/*.pem", .scions/**, .git/**, .direnv/**]
+    askFirst: [AGENTS.md, knowledge-base.yaml, flake.nix, flake.lock, .gitattributes, .gitignore]

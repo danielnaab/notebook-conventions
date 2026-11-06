@@ -1,0 +1,5 @@
+{
+  "folder": "notebook/daily",
+  "format": "YYYY-MM/YYYY-MM-DD",
+  "template": "notebook/templates/daily"
+}

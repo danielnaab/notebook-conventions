@@ -1,0 +1,73 @@
+apiVersion: meta-kb/v1
+name: "<<WORKSPACE_NAME>>"
+description: "<<ONE_LINE_DESCRIPTION>>"
+
+entrypoints:
+  human: README.md
+  agent: AGENTS.md
+
+imports:
+  - kind: local
+    path: .scions/meta-knowledge-base
+    relationship: foundational
+    sync_policy: extend
+  - kind: local
+    path: .scions/notebook-conventions
+    relationship: foundational
+    sync_policy: extend
+
+composition:
+  precedence: domain-over-pack
+  mergeStrategy: deep-merge
+
+paths:
+  daily: notebook/daily
+  sessions: notebook/sessions
+  wiki: notebook/wiki
+  raw: notebook/raw
+  docs: docs
+  tasks: notebook/tasks
+  templates: notebook/templates
+
+sources:
+  canonical:
+    - path: AGENTS.md
+      note: "Behavior and boundaries; higher-priority harness instructions still apply."
+    - path: knowledge-base.yaml
+      note: "Layout and behavioral write rules, not a technical enforcement mechanism."
+    - path: flake.nix
+      note: "Dependency and development-shell declarations; exact pins are in flake.lock."
+  interpretation:
+    - path: notebook/wiki/**
+      note: "Current synthesis; project code/config and original sources remain authoritative."
+    - path: docs/**
+      note: "Workspace operating guidance."
+  tracking:
+    - path: notebook/tasks/**
+      note: "Canonical current task state; the README is a linked index."
+  historical:
+    - path: notebook/daily/**
+      note: "Dated activity ledger, not a current task database."
+    - path: notebook/sessions/**
+      note: "Session outcomes and design snapshots, not current operational truth."
+
+rules:
+  # Scopes for knowledge-base-integrity (nix run .#check-kb). Dated notes carry no status;
+  # task records are checked by nix run .#check-tasks; .scions/ is graft output.
+  checks:
+    links:
+      include: [README.md, AGENTS.md, docs/**, notebook/**]
+    lifecycle:
+      include: [docs/**, notebook/wiki/**]
+    provenance:
+      include: [docs/**, notebook/wiki/**]
+  lifecycle:
+    # Applies to docs/ and wiki pages. Task records use their own status vocabulary
+    # (kit docs/tasks.md); daily notes and sessions are historical and carry no status.
+    statuses: [draft, working, stable, deprecated]
+  provenance:
+    requiredFor: [factual-claims, operational-guidance]
+  writes:
+    allow: [notebook/tasks/**, notebook/daily/**, notebook/sessions/**, notebook/wiki/**, notebook/raw/**, README.md]
+    deny: [secrets/**, credentials/**, .env, .env.*, "**/*.key", "**/*.pem", "**/*.p12", "**/*.pfx", .scions/**, .git/**, .direnv/**]
+    askFirst: [AGENTS.md, CLAUDE.md, knowledge-base.yaml, flake.nix, flake.lock, .envrc, .gitignore, .gitattributes, .obsidian/**, .pi/**, docs/**, notebook/templates/**, scripts/**, tests/**, .githooks/**, .markdownlint-cli2.jsonc]

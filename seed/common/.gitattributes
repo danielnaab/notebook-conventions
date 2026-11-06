@@ -1,0 +1,2 @@
+# Consumers must take dependencies directly, not recursively export ours.
+.scions/ export-ignore

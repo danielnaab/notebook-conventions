@@ -1,0 +1,86 @@
+---
+status: working
+---
+
+# Task workflow
+
+Tasks are living work records, distinct from historical daily and session notes and from durable wiki
+synthesis. One agent or person (the orchestrator) maintains current state; workers return summaries.
+
+## Layout and identity
+
+- Index: `notebook/tasks/README.md`. Records: `notebook/tasks/YYYY-MM/task-name.md`.
+  A workspace can move the folder with `rules.checks.tasks.path` in `knowledge-base.yaml`.
+- The month is the actual creation month. Lowercase descriptive slugs identify intent. Disambiguate a
+  collision before creating a record; never overwrite another task or reuse a completed task's path.
+- The repository-relative path is the identifier. Never move or rename a record on a status change or completion.
+- Use the [task-record template](../templates/task-record.md). A task that genuinely owns artifacts may be a folder
+  ending in `README.md`; choose that shape at creation. Planning artifacts normally stay in sessions or the
+  target project, linked from the task.
+- Navigation uses Markdown links relative to the containing note. In the index, `2026-11/example.md` is relative
+  to the index. Repository-relative identifiers in `blocked_by` are metadata, not links. Never embed machine-specific
+  absolute paths or Obsidian-only wikilinks.
+
+## Metadata
+
+Task `status` is its own vocabulary, a deliberate deviation from the meta-KB lifecycle statuses (see [conformance](conformance.md)).
+
+| Required field | Meaning |
+| --- | --- |
+| `status` | `ready`, `in-progress`, `waiting`, `later`, `completed`, or `canceled` |
+| `created` | Actual `YYYY-MM-DD` creation date; immutable and matches the month folder |
+| `updated` | Last substantive state or content update, not every lint or save |
+| `owner` | One responsible person or role, not necessarily who the task waits on |
+| `project` | Coarse workstream, not a second project registry |
+
+Optional: `contexts` (situational labels), `priority` (`high`, `normal`, `low`), `due` (actual deadline),
+`review_on` (chosen follow-up date), `completed` (required on completion), and `blocked_by` (other task
+identifiers, repository-relative). Omit unknown or unneeded metadata. Never invent deadlines, priorities,
+agent handles, or dependencies.
+
+The body has Goal, Next action, Resurface when, Done when, and Sources. Waiting tasks also need Waiting on.
+Closed tasks need Outcome, with evidence or a cancellation reason. Mark `completed` only when the done criteria
+are met; set the completion date and `updated`. Canceled is not completed.
+
+## One source of current state
+
+- Each task file owns its state, next action, blockers, and completion evidence. Update it and its index
+  placement together. The index lists every active task exactly once, under the section matching its status.
+- Keep up to ten recently completed links in the index. Keep completed and canceled files, with their paths.
+  Do not archive them into new status or date paths and do not delete them automatically.
+- Daily notes record activity and link to task files; sessions preserve reasoning and evidence. Do not copy
+  current task lists into every note.
+- Capture substantive confirmed follow-ups, not every suggestion. Link a project's own issues instead of
+  recreating its backlog here. Old plan checklists remain snapshots, not live queues.
+
+## When to surface tasks
+
+- **Orientation:** read the small index; surface a few relevant Ready items and waiting items whose trigger
+  may have changed. Do not repeat the whole backlog on every short interaction.
+- **Topic or repo focus:** read matching records by `project` and `contexts`.
+- **Completion or status check:** revisit tasks waiting on that specific agent or event. Verify evidence and
+  update state; ask for identifying context if needed.
+- **Requested review:** surface due and review dates that have arrived, stale blockers, and Later items,
+  using the real date. A due date is not permission to execute.
+- **Wrap-up:** update affected records and the index and capture confirmed TODOs. Apply the
+  [logging levels](workflow.md#logging-levels).
+
+These are interaction-time checks. There is no scheduler, watcher, polling loop, or notification service.
+An agent cannot know an unrelated agent finished until evidence arrives or a scoped check is requested.
+Ready status, a finished dependency, or a TODO never grants permission to launch agents, transfer data, or
+delete anything. The workspace's boundaries still apply.
+
+## Validation
+
+```bash
+nix run .#check-tasks
+```
+
+[The validator](../tools/check-tasks.py) checks metadata, paths, body and link requirements, dependencies,
+and index consistency. It does not prove claims, identify agent completion, approve operations, or schedule work.
+
+## Sources
+
+- [Meta-KB temporal layers policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.0.1/docs/policies/temporal-layers.md)
+- [Task validator](../tools/check-tasks.py)
+- [Task-record template](../templates/task-record.md)

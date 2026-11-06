@@ -1,0 +1,12 @@
+.DS_Store
+.direnv/
+result
+result-*
+__pycache__/
+.pi/sessions/
+.pi/settings.local.json
+.claude/settings.local.json
+.env
+.env.*
+*.key
+*.pem

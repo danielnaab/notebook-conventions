@@ -1,0 +1,32 @@
+# Local and runtime artifacts
+.DS_Store
+.local/
+.direnv/
+result
+result-*
+__pycache__/
+.pi/sessions/
+.pi/settings.local.json
+.claude/settings.local.json
+
+# Obsidian: shared core settings and reviewed plugin settings are tracked; per-device state is not
+.obsidian/workspace*.json
+.obsidian/cache/
+.obsidian/plugins/*
+!.obsidian/plugins/calendar/
+!.obsidian/plugins/obsidian-linter/
+.obsidian/plugins/*/*
+!.obsidian/plugins/calendar/data.json
+!.obsidian/plugins/obsidian-linter/data.json
+.obsidian/themes/
+.trash/
+
+# Credential material never belongs in this repository
+.env
+.env.*
+secrets/
+credentials/
+*.key
+*.pem
+*.p12
+*.pfx

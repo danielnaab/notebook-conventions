@@ -1,0 +1,13 @@
+# What graft exports to consumers (.scions/notebook-conventions): reference content, tools, nix
+# wiring, and the seed. Everything below is development of this repository.
+/.scions export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.envrc export-ignore
+/.markdownlint-cli2.jsonc export-ignore
+/AGENTS.md export-ignore
+/CLAUDE.md export-ignore
+/flake.nix export-ignore
+/flake.lock export-ignore
+/knowledge-base.yaml export-ignore
+/tests export-ignore
