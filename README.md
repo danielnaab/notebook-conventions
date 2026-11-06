@@ -23,8 +23,8 @@ place, and copies a small `seed/` once.
 ## Use it
 
 See the [adoption guide](docs/adoption.md): copy the seed, fill the placeholders, write the boundaries, graft the
-kit, and check. Upgrade with `nix run .#graft-upgrade`, read the changelog's **Upgrading** steps, and let
-`graft-migrate` brief an agent.
+kit, and check. Upgrade with `nix run .#graft upgrade`, read the changelog's **Upgrading** steps, and let
+`nix run .#graft migrate` brief an agent.
 
 ## Principles
 

@@ -18,5 +18,5 @@ pin it as a graft scion. Read [README.md](README.md), then [KB configuration](kn
 - **Docs follow the meta-KB:** `status` frontmatter, `## Sources`, real relative links. Keep policy-style text short.
 - **Verify:** `nix flake check` runs the tests (tool tests, a workspace built from `seed/`, and the hygiene scan);
   `nix run .#check-kb` checks links, status, and Sources here. Tests need no network.
-- `.scions/` is graft output; never edit it. Upgrade inputs with `nix run .#graft-upgrade`.
+- `.scions/` is graft output; never edit it. Upgrade inputs with `nix run .#graft upgrade`.
 - Do not push, tag, or publish without the owner's authorization.

@@ -75,6 +75,20 @@ class SeedTest(unittest.TestCase):
             if path.is_file() and ".scions" not in path.parts and ".obsidian" not in path.parts:
                 self.assertIsNone(PLACEHOLDER.search(path.read_text()), path)
 
+    def test_seed_pins_the_release_it_ships_in(self):
+        newest = re.search(r"^## (v[0-9.]+)", (KIT / "CHANGELOG.md").read_text(), re.M).group(1)
+        self.assertIn(f"notebook-conventions/{newest}\"", (KIT / "seed/common/flake.nix").read_text())
+
+    def test_seed_pins_the_graft_the_kit_uses(self):
+        pin = re.search(r"danielnaab/graft/v[0-9.]+", (KIT / "flake.nix").read_text()).group(0)
+        self.assertIn(pin, (KIT / "seed/common/flake.nix").read_text())
+
+    def test_envrc_waits_for_the_wiring_and_watches_it(self):
+        envrc = (self.root / ".envrc").read_text()
+        self.assertIn('watch_file "$wiring"', envrc)
+        self.assertLess(envrc.index("watch_file"), envrc.index("\n  use flake"))
+        self.assertIn('if [ -f "$wiring" ]', envrc)
+
     def test_flake_imports_the_scion_wiring_conditionally(self):
         flake = (self.root / "flake.nix").read_text()
         self.assertIn("builtins.pathExists wiring", flake)

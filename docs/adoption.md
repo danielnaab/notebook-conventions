@@ -9,7 +9,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
 
 ## Start a workspace
 
-1. Create the repository and an `.envrc` with `use flake` if you use direnv.
+1. Create the repository. The seed includes an `.envrc` for direnv; the dev shell appears after step 5.
 2. Copy the seed. The profile is copied first so its files win; `-n` never overwrites.
 
    ```sh
@@ -22,13 +22,12 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
    and `knowledge-base.yaml`.
 4. Write the boundaries. `docs/boundaries.md` is a skeleton: which data, accounts, tools, and services this
    workspace may use. The kit supplies no boundaries, because they depend on the workspace's context.
-5. Materialize the pinned guidance and the kit. Flakes see only Git-tracked files, so track the seed first and
-   the scions right after they appear:
+5. Materialize the pinned guidance and the kit. Flakes see only Git-tracked files, so track the seed first;
+   graft stages the scions itself:
 
    ```sh
    git init -b main && git add -A     # flake.nix must be tracked for nix to read it
-   nix run .#graft                    # writes .scions/ (meta-KB and this kit)
-   git add .scions                    # now flake.nix can import the kit's wiring
+   nix run .#graft                    # writes and stages .scions/ (meta-KB and this kit)
    cp .scions/notebook-conventions/templates/*.md notebook/templates/
    git config core.hooksPath .githooks   # the seeded wrapper runs the kit's hook
    ```
@@ -55,12 +54,12 @@ match the pinned versions. A changed template is a local choice, not an error.
 
 ## Upgrade
 
-1. `nix run .#graft-outdated` shows the pinned and newest tags.
-2. `nix run .#graft-upgrade -- notebook-conventions@vX.Y.Z` moves the pin and rebuilds `.scions/`.
+1. `nix run .#graft outdated` shows the pinned and newest tags.
+2. `nix run .#graft upgrade notebook-conventions@vX.Y.Z` moves the pin and rebuilds `.scions/`.
    Graft takes a new major only when you name it.
 3. Read the kit's `CHANGELOG.md` sections between the tags. **Upgrading** says what to change in the workspace's
    own files, including seeded files that changed.
-4. On the upgrade branch, `nix run .#graft-migrate` prints a brief for an agent or a person: what moved, the
+4. On the upgrade branch, `nix run .#graft migrate` prints a brief for an agent or a person: what moved, the
    rules, the provider's changelog text, the scion diff, and the workspace lines that name moved paths.
 5. Apply the steps, run `nix flake check` and the repository checks, then commit `flake.nix`, `flake.lock`,
    `.scions/`, and the workspace changes together.
@@ -75,6 +74,6 @@ While the kit is `0.x`, any release may change seeded files, so every release ca
 
 ## Sources
 
-- [Graft README: upgrades and migrations](https://github.com/danielnaab/graft/blob/v2.5.1/README.md#breaking-changes-and-migrations)
+- [Graft README: upgrades and migrations](https://github.com/danielnaab/graft/blob/v2.6.0/README.md#breaking-changes-and-migrations)
 - [Meta-KB dependency playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.0.1/docs/playbooks/manage-kb-dependencies.md)
 - [Seed files](../seed/common/)

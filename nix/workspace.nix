@@ -1,8 +1,8 @@
 # Shared flake wiring for Markdown work-memory workspaces.
 #
 # In a workspace's flake.nix (see seed/common/flake.nix):
-#   workspace = import ./.scions/notebook-conventions/nix/workspace.nix { inherit inputs; };
-#   outputs = inputs: lib.recursiveUpdate graftOutputs workspace;
+#   wiring = ./.scions/notebook-conventions/nix/workspace.nix;
+#   inputs.graft.lib.mkFlake { …; outputs = import wiring { inherit inputs; }; }
 #
 # Needs the inputs `nixpkgs` and `knowledge-base-integrity` (flake = false), and `self`.
 { inputs

@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.1.3 - 2026-11-06
+
+### Changed
+
+- graft v2.6.0: the seed's `flake.nix` uses `mkFlake`, and the docs name its subcommands
+  (`nix run .#graft upgrade`). `nix run .#graft` now stages `.scions/`, so the adoption guide drops `git add .scions`.
+- The seed pins this kit at the release it ships in. It had stayed at `v0.1.0`.
+
+### Fixed
+
+- The seed's `.envrc` failed in a new workspace: the dev shell comes from the kit, which isn't there before the
+  first `nix run .#graft`. It now says what to run instead. It also watches the kit's wiring, so a graft or an
+  upgrade reloads the shell; `use flake` watches only `flake.nix` and `flake.lock`.
+
+### Upgrading
+
+Needs graft v2.6.0. In `flake.nix`, move graft to `v2.6.0`, then replace the `outputs` that call `mkGraft` with the
+ones in `seed/common/flake.nix`, keeping any local changes. `graft upgrade` can't make this change. Copy
+`seed/common/.envrc` over the workspace's `.envrc` if it is the seeded `use flake`. Then `nix run .#graft`, and
+`nix flake check`.
+
 ## v0.1.2 - 2026-11-06
 
 ### Added

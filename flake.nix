@@ -2,7 +2,7 @@
   description = "Conventions, tools, and a starter seed for Markdown work-memory workspaces";
 
   inputs = {
-    graft.url = "github:danielnaab/graft/v2.5.1";
+    graft.url = "github:danielnaab/graft/v2.6.0";
     nixpkgs.follows = "graft/nixpkgs";
     meta-knowledge-base = {
       url = "github:danielnaab/meta-knowledge-base/v1.0.1";
@@ -19,11 +19,6 @@
       lib = inputs.nixpkgs.lib;
       systems = [ "aarch64-darwin" "x86_64-darwin" "aarch64-linux" "x86_64-linux" ];
       forAll = f: lib.genAttrs systems (system: f inputs.nixpkgs.legacyPackages.${system});
-      graftOutputs = inputs.graft.lib.mkGraft {
-        inherit inputs;
-        deps = [ "meta-knowledge-base" ];
-        dir = ".scions";
-      };
       # The kit has no task records of its own, so it skips the task check.
       workspace = import ./nix/workspace.nix { inherit inputs; withTasks = false; };
       kitChecks = {
@@ -39,5 +34,12 @@
           '';
         });
       };
-    in lib.recursiveUpdate (lib.recursiveUpdate graftOutputs workspace) kitChecks;
+    in
+    inputs.graft.lib.mkFlake {
+      inherit inputs;
+      # named, because knowledge-base-integrity is `flake = false` for the tools but isn't a scion
+      scions = [ "meta-knowledge-base" ];
+      dir = ".scions";
+      outputs = lib.recursiveUpdate workspace kitChecks;
+    };
 }
