@@ -46,10 +46,12 @@ markdownlint-cli2 --fix FILE...  # fix in place; output matches the Obsidian Lin
 ## Pre-commit hook
 
 [`tools/hooks/pre-commit`](../tools/hooks/pre-commit) runs the lint check on staged `.md` files and
-`nix run .#check-kb` over the repository, and blocks the commit on violations. Enable it once per clone:
+`nix run .#check-kb` over the repository, and blocks the commit on violations. Git cannot run it from
+`.scions/`, because graft does not keep the executable bit there. The seed therefore has an executable wrapper,
+`.githooks/pre-commit`, that runs it with `sh`. Enable the wrapper once per clone:
 
 ```sh
-git config core.hooksPath .scions/notebook-conventions/tools/hooks
+git config core.hooksPath .githooks
 ```
 
 It falls back to `nix develop` when `markdownlint-cli2` is not on `PATH`.

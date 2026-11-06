@@ -30,7 +30,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
    nix run .#graft                    # writes .scions/ (meta-KB and this kit)
    git add .scions                    # now flake.nix can import the kit's wiring
    cp .scions/notebook-conventions/templates/*.md notebook/templates/
-   git config core.hooksPath .scions/notebook-conventions/tools/hooks
+   git config core.hooksPath .githooks   # the seeded wrapper runs the kit's hook
    ```
 
 6. Check: `nix run .#check-kb`, `nix run .#check-tasks`, `nix flake check`.
@@ -42,7 +42,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
 | Conventions | Links into `.scions/notebook-conventions/docs/`; the local `docs/conventions.md` states only local rules. |
 | Agent skills | `.pi/settings.json` lists `../.scions/notebook-conventions/skills` under `skills`. |
 | Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the scion; apps run its `tools/`. |
-| Hook | `core.hooksPath` points at the scion's `tools/hooks`. |
+| Hook | The seeded `.githooks/pre-commit` wrapper runs the kit's hook; `core.hooksPath` is `.githooks`. |
 
 ## Local overlay
 

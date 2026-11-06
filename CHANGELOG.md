@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.1.1 - 2026-11-06
+
+### Fixed
+
+- The pre-commit hook could not run from the scion: graft does not keep the executable bit on files in `.scions/`,
+  so git ignored `core.hooksPath` set to the kit's `tools/hooks`. The seed now has an executable wrapper,
+  `.githooks/pre-commit`, that runs the kit's hook with `sh`.
+
+### Upgrading
+
+If you enabled the hook with `core.hooksPath .scions/notebook-conventions/tools/hooks` (v0.1.0), it never ran:
+
+1. Copy the wrapper, keeping its executable bit:
+   `cp -n .scions/notebook-conventions/seed/common/.githooks/pre-commit .githooks/pre-commit` after
+   `mkdir -p .githooks`, then `chmod +x .githooks/pre-commit` and track it with `git add`.
+2. `git config core.hooksPath .githooks`.
+3. Update any local text that tells people to set the old path.
+4. Done when `git commit` on a staged Markdown file runs `markdownlint-cli2` and `nix run .#check-kb`.
+
 ## v0.1.0 - 2026-11-06
 
 First release, extracted from a working workspace.

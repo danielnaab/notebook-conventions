@@ -2,7 +2,8 @@
 # Block commits whose staged Markdown breaks the heading-spacing rule the vault's Obsidian Linter
 # enforces, or that break links, lifecycle status, or Sources sections (nix run .#check-kb).
 # Fix formatting with: markdownlint-cli2 --fix <files>
-# Enable once per clone: git config core.hooksPath .scions/notebook-conventions/tools/hooks
+# Run it through the workspace's .githooks/pre-commit wrapper (graft drops the executable bit in .scions/).
+# Enable once per clone: git config core.hooksPath .githooks
 set -eu
 cd "$(git rev-parse --show-toplevel)"
 

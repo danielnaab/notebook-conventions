@@ -95,6 +95,13 @@ class SeedTest(unittest.TestCase):
         proc = self.run_tool(str(KIT / "tools/check-kb.py"), "--root", str(self.root), env={"KBI_SRC": kbi})
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
 
+    def test_hook_wrapper_is_executable_and_runs_the_kit_hook(self):
+        wrapper = self.root / ".githooks/pre-commit"
+        self.assertTrue(os.access(wrapper, os.X_OK), "graft drops the exec bit in .scions/, so the wrapper must have it")
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.root, check=True)
+        proc = subprocess.run([str(wrapper)], cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)  # no staged Markdown: exits 0
+
     def test_skill_files_are_loadable(self):
         for skill in (self.root / ".scions/notebook-conventions/skills").glob("*/SKILL.md"):
             head = skill.read_text().split("---")[1]
