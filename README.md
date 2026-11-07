@@ -12,10 +12,10 @@ place, and copies a small `seed/` once.
 
 | Path | Purpose |
 | --- | --- |
-| [docs/](docs/README.md) | The conventions: layout, workflow, tasks, conformance, Obsidian, adoption. |
+| [docs/](docs/README.md) | The conventions: layout, workflow, tasks, conformance, Obsidian, adoption; pinned Obsidian plugins. |
 | [templates/](templates/) | Canonical daily, session, wiki, and task-record note templates. |
 | [skills/](skills/) | Generic agent skills `notebook-start` and `notebook-wrap`. |
-| [tools/](tools/) | `check-tasks`, `check-kb`, `check-templates`, `index`, `move`, `convert`, and a pre-commit hook. |
+| [tools/](tools/) | `check-tasks`, `check-kb`, `check-templates`, `check-obsidian`, `index`, `move`, `convert`, and a pre-commit hook. |
 | [nix/workspace.nix](nix/workspace.nix) | Flake wiring: dev shell, check apps, task check. |
 | [seed/](seed/common/) | Files a workspace copies once and then owns. |
 | [LICENSE](LICENSE) | CC0 1.0 Universal. |

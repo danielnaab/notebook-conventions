@@ -97,6 +97,10 @@ class SeedTest(unittest.TestCase):
         proc = self.run_tool(str(KIT / "tools/check-templates.py"), "--root", str(self.root), "--strict")
         self.assertEqual(0, proc.returncode, proc.stdout)
 
+    def test_obsidian_settings_match_the_seed(self):
+        proc = self.run_tool(str(KIT / "tools/check-obsidian.py"), "--root", str(self.root), "--strict")
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+
     def test_integrity_checks_pass(self):
         kbi = os.environ.get("KBI_SRC")
         if not kbi:

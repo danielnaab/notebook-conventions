@@ -1,4 +1,4 @@
-// Mirrors the one rule enabled in .obsidian/plugins/obsidian-linter/data.json
+// Mirrors the one rule enabled in notebook/.obsidian/plugins/obsidian-linter/data.json
 // ("Heading blank lines"). Keep this file in sync with that plugin config.
 {
   "config": {

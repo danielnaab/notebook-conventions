@@ -38,6 +38,9 @@ in {
       check-templates = app pkgs "check-templates" ''
         exec python ${kit}/tools/check-templates.py "$@"
       '' "Report how note templates differ from the pinned canonical copies";
+      check-obsidian = app pkgs "check-obsidian" ''
+        exec python ${kit}/tools/check-obsidian.py "$@"
+      '' "Report how the vault's shared Obsidian settings and plugins differ from the kit's";
       index = app pkgs "index" ''
         export KBI_SRC=${kbiSrc}
         exec python ${kit}/tools/index.py "$@"

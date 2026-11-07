@@ -1,5 +1,46 @@
 # Changelog
 
+## v0.2.1 - 2026-11-07
+
+The seed carries the full set of shared Obsidian preferences, and a check reports where a vault has drifted
+from them.
+
+### Added
+
+- **Shortcuts** (`notebook/.obsidian/hotkeys.json`): `Mod-P` opens Quick Switcher++ file mode and `Mod-Shift-P` its
+  command mode, with no shortcut left on the stock command palette. `Mod-Shift-F` opens vault-wide Search, and the
+  stock quick switcher keeps `Mod-O`.
+- **Plugins:** Advanced Tables (`table-editor-obsidian`) and Quick Switcher++ (`darlal-switcher-plus`) join
+  Calendar and Linter in `community-plugins.json`. Advanced Tables' `data.json` is seeded, and `.gitignore`
+  tracks both plugins' `data.json`.
+- **Plugin pins:** [`docs/obsidian-plugins.json`](docs/obsidian-plugins.json) records the reviewed release of
+  each of the four plugins: version, source commit, minimum Obsidian version, and release-asset SHA-256 hashes.
+  The workspace reads it in place.
+- **Layout preset** (`notebook/.obsidian/layout-preset.json`): Calendar above Search in the right sidebar, with no
+  open files. Apply it by hand with the vault closed ([Obsidian](docs/obsidian.md#layout-preset)).
+- `nix run .#check-obsidian` compares the vault's shared settings with the seed's (as JSON, so Obsidian's
+  reformatting is not drift) and shows each pinned plugin's installed state. `--strict` exits 1 on changed or
+  missing settings.
+
+### Upgrading
+
+From v0.2.0; the steps change seeded files only.
+
+1. `nix run .#graft upgrade notebook-conventions@v0.2.1`.
+2. `nix run .#check-obsidian` lists the seeded settings as same, changed, or missing. For each `missing` file,
+   copy it from `.scions/notebook-conventions/seed/common/notebook/.obsidian/`. For `changed` files, merge the
+   kit's entries if the workspace wants them: `community-plugins.json` gains the two plugins, and
+   `hotkeys.json` is new. Close Obsidian first, because it overwrites these files while running.
+3. In `.gitignore`, add the exceptions for `table-editor-obsidian` and `darlal-switcher-plus` beside the existing
+   Calendar and Linter lines, as in `seed/common/.gitignore`. `git status` should then show
+   `notebook/.obsidian/plugins/table-editor-obsidian/data.json` and none of the plugin code.
+4. If local docs list the shortcuts, plugins, or layout, link to the kit's
+   [Obsidian](docs/obsidian.md) page instead. Keep the workspace's own plugin approvals and boundaries.
+5. Install the plugins the workspace's boundaries allow, in the Obsidian UI or from the pinned releases.
+
+Done when `nix run .#check-obsidian` lists no `missing` files and every `changed` file is a deliberate local
+choice, and `nix run .#check-kb` and `nix flake check` pass.
+
 ## v0.2.0 - 2026-11-06
 
 `notebook/` becomes the Obsidian vault and an [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)

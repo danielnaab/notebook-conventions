@@ -46,6 +46,7 @@ Records without `status` are no longer a deviation: meta-KB v1.1.0 adds the raw-
 - `nix run .#index -- --check` reports stale folder indexes.
 - `nix run .#check-tasks` validates task records and the index.
 - `nix run .#check-templates` reports drift between a workspace's templates and the kit's canonical copies.
+- `nix run .#check-obsidian` reports drift between the vault's shared Obsidian settings and the kit's seed.
 - Write boundaries and `askFirst` approvals are not machine-checked. Verify them in Plan → Patch → Verify.
 
 ## Sources

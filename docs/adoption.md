@@ -33,7 +33,8 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
    ```
 
 6. Open `notebook/` as the Obsidian vault.
-7. Check: `nix run .#check-kb`, `nix run .#check-tasks`, `nix run .#index -- --check`, `nix flake check`.
+7. Check: `nix run .#check-kb`, `nix run .#check-tasks`, `nix run .#index -- --check`,
+   `nix run .#check-obsidian -- --strict`, `nix flake check`.
 
 ## What the workspace references in place
 
@@ -41,7 +42,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
 | --- | --- |
 | Conventions | Links into `.scions/notebook-conventions/docs/`; the local `docs/conventions.md` states only local rules. |
 | Agent skills | `.pi/settings.json` lists `../.scions/notebook-conventions/skills` under `skills`. |
-| Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the pinned kit input; apps run its `tools/`: `check-kb`, `check-tasks`, `check-templates`, `index`, `move`, and `convert` (the v0.2 upgrade). |
+| Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the pinned kit input; apps run its `tools/`: `check-kb`, `check-tasks`, `check-templates`, `check-obsidian`, `index`, `move`, and `convert` (the v0.2 upgrade). |
 | Hook | The seeded `.githooks/pre-commit` wrapper runs the kit's hook; `core.hooksPath` is `.githooks`. |
 
 ## Local overlay
@@ -51,7 +52,9 @@ conformance** table ([conformance](conformance.md)), and lists local deviations 
 add local rules and name the kit skill they extend; they do not copy it.
 
 Templates are copied because Obsidian needs them visible. `nix run .#check-templates` lists which copies still
-match the pinned versions. A changed template is a local choice, not an error.
+match the pinned versions. A changed template is a local choice, not an error. Shared Obsidian settings are
+seeded for the same reason; `nix run .#check-obsidian` lists which still match the kit's
+([Obsidian](obsidian.md#keeping-settings-in-sync)).
 
 ## Upgrade
 

@@ -15,9 +15,13 @@ notebook/.obsidian/cache/
 notebook/.obsidian/plugins/*
 !notebook/.obsidian/plugins/calendar/
 !notebook/.obsidian/plugins/obsidian-linter/
+!notebook/.obsidian/plugins/table-editor-obsidian/
+!notebook/.obsidian/plugins/darlal-switcher-plus/
 notebook/.obsidian/plugins/*/*
 !notebook/.obsidian/plugins/calendar/data.json
 !notebook/.obsidian/plugins/obsidian-linter/data.json
+!notebook/.obsidian/plugins/table-editor-obsidian/data.json
+!notebook/.obsidian/plugins/darlal-switcher-plus/data.json
 notebook/.obsidian/themes/
 .trash/
 
