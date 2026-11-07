@@ -22,16 +22,16 @@
     "knowledge-base-integrity": {
       "flake": false,
       "locked": {
-        "lastModified": 1793979945,
-        "narHash": "sha256-zWg+AtjbzzKdg2CHV0Fa0J95ussRNdSSXnPiGJyx+gM=",
+        "lastModified": 1794023281,
+        "narHash": "sha256-hPkt/il1Hl/t27V8H6YZWbX7MSRMhEsqeLcdHQEACyc=",
         "owner": "danielnaab",
         "repo": "knowledge-base-integrity",
-        "rev": "e805021bdd80d752f70a6e3adfc2687b9195c824",
+        "rev": "cf58270190af0216225fd6f9ef65e20f25890033",
         "type": "github"
       },
       "original": {
         "owner": "danielnaab",
-        "ref": "v0.2.0",
+        "ref": "v0.4.0",
         "repo": "knowledge-base-integrity",
         "type": "github"
       }
@@ -39,16 +39,16 @@
     "meta-knowledge-base": {
       "flake": false,
       "locked": {
-        "lastModified": 1793687928,
-        "narHash": "sha256-aoIeWfcouAlS2HvgOwqXI0UgMud4B/8qpfvmwepAURU=",
+        "lastModified": 1794022011,
+        "narHash": "sha256-WVoRvfpgn6l+stULkuFwZpW8K6K+oPqWpQbcW5NnJzQ=",
         "owner": "danielnaab",
         "repo": "meta-knowledge-base",
-        "rev": "262707b2deff0892fda50dec0f3020ce3a1125f2",
+        "rev": "8223746e072f3effdc7057e9869e986c02fc55f7",
         "type": "github"
       },
       "original": {
         "owner": "danielnaab",
-        "ref": "v1.0.1",
+        "ref": "v1.1.0",
         "repo": "meta-knowledge-base",
         "type": "github"
       }

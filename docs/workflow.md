@@ -69,7 +69,7 @@ A user-initiated information request can merit a compact daily record even when 
 3. Use the [templates](../templates/). Resolve placeholders when writing: use the real date and title.
    Never leave `{{...}}` in a saved note and never rewrite a historical note's date.
 4. Patch the smallest useful set of documents. Ground important claims and operational guidance in linked
-   evidence, preferably in `## Sources`.
+   evidence: `sources` frontmatter with footnotes in the vault, or a `## Sources` section.
 5. Verify links, claims, and exact checks. Distinguish proposed, changed, committed, pushed, merged,
    deployed, and activated states.
 
@@ -83,23 +83,27 @@ A user-initiated information request can merit a compact daily record even when 
 
 ## Sessions and closure
 
-- One folder per coherent thread with an intent-revealing slug, not per question, chat, or lookup.
-  Avoid colliding with an unrelated session; use a more specific slug and never overwrite.
-- A session resumed on another date keeps its original folder. Update its index and link it from each
-  active day's note. Date significant follow-ups; do not silently rewrite earlier decisions.
+- One record per coherent thread, `records/sessions/YYYY-MM/YYYY-MM-DD-<slug>.md`, with an intent-revealing slug,
+  not per question, chat, or lookup. Artifacts go in a sibling `YYYY-MM-DD-<slug>/` folder. Avoid colliding with
+  an unrelated session; use a more specific slug and never overwrite.
+- A session resumed on another date keeps its original file. Update it and link it from each active day's note.
+  Date significant follow-ups; do not silently rewrite earlier decisions.
 - Artifacts are snapshots. Promote lasting insight into a wiki page and link the evidence back.
   Deleting a completed session requires authorization.
 - Log outcomes, decisions and rationale, evidence, blockers and owners, and next actions. For delegated work
   record the repo, handle, session, ownership, completion condition, and disposition.
-- At a checkpoint update only the applicable records: affected tasks and index or wiki pages, a concise daily
-  entry, and the session index if one exists. Verify evidence before closing a task.
+- At a checkpoint update only the applicable records: affected tasks, wiki pages, a concise daily entry, and the
+  session record if one exists, then regenerate indexes with `nix run .#index`. Verify evidence before closing a
+  task. Agent-written notes record `generated`; a person's review adds `verified` ([layout](layout.md#notes)).
 - Workers return note-ready summaries; the orchestrating agent is the single writer of shared indexes.
 
 ## Durable notes
 
 - Start with focused topic pages and a map, not a fixed taxonomy. Add folders when repeated navigation pain warrants them.
 - Use lifecycle `status: draft | working | stable | deprecated`. Stable means reviewed and aligned with sources.
-  Keep freshness limits visible.
+  Keep freshness limits visible; set `stale_after` on notes about time-bound things.
+- Records and raw sources are written once. After a record's own date, change it only to add a dated correction;
+  never edit a raw source. Promote what they teach into wiki pages that cite them.
 - Update or mark outdated synthesis when evidence changes. Do not copy a transient task list into many documents.
 
 ## Safety
@@ -111,7 +115,7 @@ A user-initiated information request can merit a compact daily record even when 
 
 ## Sources
 
-- [Meta-KB agent workflow playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.0.1/docs/playbooks/agent-workflow.md)
-- [Meta-KB provenance policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.0.1/docs/policies/provenance.md)
-- [Meta-KB lifecycle policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.0.1/docs/policies/lifecycle.md)
-- [Meta-KB evolve-a-KB playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.0.1/docs/playbooks/evolve-kb.md)
+- [Meta-KB agent workflow playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/agent-workflow.md)
+- [Meta-KB provenance policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/provenance.md)
+- [Meta-KB lifecycle policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/lifecycle.md)
+- [Meta-KB evolve-a-KB playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/evolve-kb.md)

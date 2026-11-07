@@ -12,7 +12,8 @@ This system does **not** mandate document taxonomies. It standardizes:
 - **Lifecycle**: draft → working → stable → deprecated
 - **Strategy**: how to choose an organization approach and evolve it with evidence
 - **Linking**: how to keep browser navigation intuitive
-- **Temporal layers**: organizing ephemeral, tracking, and durable knowledge
+- **Temporal layers**: organizing ephemeral, tracking, and durable knowledge, plus optional raw
+  sources and historical records
 - **KB dependencies**: managing cross-repository knowledge relationships
 - **Evolution triggers**: evidence-based approach to adding complexity
 - **Generated content**: when and how to automate documentation
@@ -34,7 +35,7 @@ Essential patterns for all knowledge bases:
 
 For evolving and complex knowledge bases:
 
-- [Temporal layers](docs/policies/temporal-layers.md) - Organizing ephemeral, tracking, and durable knowledge
+- [Temporal layers](docs/policies/temporal-layers.md) - Organizing ephemeral, tracking, durable, raw, and historical knowledge
 - [Generated content](docs/policies/generated-content.md) - When to automate documentation
 
 ## Organization Strategies

@@ -4,24 +4,28 @@ status: working
 
 # Obsidian and Markdown formatting
 
-The repository root is the Obsidian vault. Obsidian is a view over the same Markdown agents maintain.
-The [seed](../seed/common/.obsidian/) carries shared core settings; machine-specific UI state stays local.
+`notebook/` is the Obsidian vault (Open folder as vault), so the vault is the OKF bundle and nothing else: code,
+workspace docs, and `.scions/` stay outside it. Obsidian is a view over the same Markdown agents maintain.
+The [seed](../seed/common/notebook/.obsidian/) carries shared core settings; machine-specific UI state stays local.
 
 ## Shared settings
 
 | Setting | Value |
 | --- | --- |
-| Daily notes folder | `notebook/daily` |
+| Daily notes folder | `records/daily` |
 | Daily notes date format | `YYYY-MM/YYYY-MM-DD` (the plugin creates the month folder) |
-| Daily notes template | `notebook/templates/daily` |
-| Templates folder | `notebook/templates` |
+| Daily notes template | `templates/daily` |
+| Templates folder | `templates` |
 | Open on startup | Current daily note (`app.json` → `openBehavior: daily`) |
-| Markdown links | Enabled, relative paths; link updates on rename enabled |
+| Markdown links | Enabled, relative paths; link updates on rename enabled; wikilinks off |
 | Attachments | `./attachments`, beside the note's folder |
 
-- Obsidian omits hidden folders (`.scions/`, `.pi/`), so notes cannot link into pinned guidance inside its UI.
-  Those folders stay available on disk and in Git hosts. Templates must live in a visible folder, which is
-  why a workspace copies them from the kit.
+- Paths in the settings are relative to the vault, `notebook/`. Templates must live in a visible folder, which is
+  why a workspace copies them from the kit into `notebook/templates/`.
+- Notes cannot link to workspace docs or the kit, which are outside the vault; use URLs or backticked paths.
+- `[[` autocomplete finds notes by `title` and `aliases` and inserts a Markdown link; people notes carry an
+  `@Full Name` alias, so `[[@` lists people. Links to notes not written yet show in the graph and create the
+  note on click.
 - Track plugin `data.json` files only for plugins you have reviewed: preferences can contain credentials or
   private text. Keep plugin executables, manifests, caches, and live workspace state ignored. A clone restores
   preferences, not plugin installations.
@@ -59,5 +63,5 @@ It falls back to `nix develop` when `markdownlint-cli2` is not on `PATH`.
 ## Sources
 
 - [Obsidian Linter](https://github.com/platers/obsidian-linter)
-- [Seed Obsidian settings](../seed/common/.obsidian/app.json)
+- [Seed Obsidian settings](../seed/common/notebook/.obsidian/app.json)
 - [Pre-commit hook](../tools/hooks/pre-commit)

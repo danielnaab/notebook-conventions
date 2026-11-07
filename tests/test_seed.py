@@ -109,6 +109,19 @@ class SeedTest(unittest.TestCase):
         proc = self.run_tool(str(KIT / "tools/check-kb.py"), "--root", str(self.root), env={"KBI_SRC": kbi})
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
 
+    def test_indexes_are_current(self):
+        kbi = os.environ.get("KBI_SRC")
+        if not kbi:
+            self.skipTest("KBI_SRC not set")
+        proc = self.run_tool(str(KIT / "tools/index.py"), "--root", str(self.root), "--check", env={"KBI_SRC": kbi})
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+
+    def test_vault_settings_live_in_the_vault(self):
+        self.assertFalse((self.root / ".obsidian").exists())
+        daily = json.loads((self.root / "notebook/.obsidian/daily-notes.json").read_text())
+        self.assertEqual("records/daily", daily["folder"])
+        self.assertTrue((self.root / "notebook" / (daily["template"] + ".md")).is_file())
+
     def test_hook_wrapper_is_executable_and_runs_the_kit_hook(self):
         wrapper = self.root / ".githooks/pre-commit"
         self.assertTrue(os.access(wrapper, os.X_OK), "graft drops the exec bit in .scions/, so the wrapper must have it")

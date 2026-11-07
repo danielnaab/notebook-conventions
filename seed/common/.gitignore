@@ -10,15 +10,15 @@ __pycache__/
 .claude/settings.local.json
 
 # Obsidian: shared core settings and reviewed plugin settings are tracked; per-device state is not
-.obsidian/workspace*.json
-.obsidian/cache/
-.obsidian/plugins/*
-!.obsidian/plugins/calendar/
-!.obsidian/plugins/obsidian-linter/
-.obsidian/plugins/*/*
-!.obsidian/plugins/calendar/data.json
-!.obsidian/plugins/obsidian-linter/data.json
-.obsidian/themes/
+notebook/.obsidian/workspace*.json
+notebook/.obsidian/cache/
+notebook/.obsidian/plugins/*
+!notebook/.obsidian/plugins/calendar/
+!notebook/.obsidian/plugins/obsidian-linter/
+notebook/.obsidian/plugins/*/*
+!notebook/.obsidian/plugins/calendar/data.json
+!notebook/.obsidian/plugins/obsidian-linter/data.json
+notebook/.obsidian/themes/
 .trash/
 
 # Credential material never belongs in this repository
