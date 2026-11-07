@@ -6,11 +6,16 @@
 # Needs the inputs `nixpkgs` and `knowledge-base-integrity` (flake = false), and `self` (for the task check).
 #
 # Outputs: a dev shell; an app per kit tool (nix run .#check-kb); the task check; and packages.tools, one
-# directory whose bin/ holds every kit tool plus just and markdownlint-cli2, for running the tools without
-# evaluating the workspace's own flake (docs/adoption.md#run-the-tools-without-the-root-flake).
+# directory whose bin/ holds every kit tool plus just and markdownlint-cli2.
+#
+# flakeDir: where the workspace's flake.nix sits under its top, as given to graft's mkFlake (default `.`). A flake
+# in a subdirectory (`nix/workspace`) keeps the workspace's content out of the Nix store, so its source holds no
+# notes: there is no task check (`just check` runs check-tasks on the working tree instead).
+# docs/adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store
 { inputs
 , systems ? [ "aarch64-darwin" "x86_64-darwin" "aarch64-linux" "x86_64-linux" ]
 , withTasks ? true
+, flakeDir ? "."
 , extraPackages ? (_pkgs: [ ])
 }:
 let
@@ -19,6 +24,8 @@ let
   forAll = f: lib.genAttrs systems (system: f inputs.nixpkgs.legacyPackages.${system});
   python = pkgs: pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
   kbiSrc = "${inputs.knowledge-base-integrity}/src";
+  # the flake's source is the workspace only when the flake is at its top
+  atTop = lib.elem (lib.removeSuffix "/" flakeDir) [ "." "" ];
 
   # name -> [ script description needsKbi ]
   tools = {
@@ -68,7 +75,7 @@ in {
   }) (scripts pkgs));
 
   checks = forAll (pkgs:
-    lib.optionalAttrs withTasks {
+    lib.optionalAttrs (withTasks && atTop) {
       tasks = pkgs.runCommand "tasks-check" {
         nativeBuildInputs = [ (python pkgs) ];
         PYTHONDONTWRITEBYTECODE = "1";

@@ -11,7 +11,9 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
 
 1. Create the repository. The seed includes an `.envrc` for direnv (`use flake`); the dev shell has
    [just](https://just.systems) and the kit's tools. Without direnv, run `nix develop`, or put `just` on `PATH`
-   another way.
+   another way. If the notes must never be copied into the Nix store, use the
+   [subdirectory layout](#a-workspace-whose-content-must-not-enter-the-nix-store) from the start: below, run the
+   flake as `path:nix/workspace` wherever these steps say `.`.
 2. Copy the seed. The profile is copied first so its files win; `-n` never overwrites.
 
    ```sh
@@ -94,8 +96,8 @@ kit's defaults read. Examples, one per line:
 ```just
 kit_run := "{}"                             # the kit's tools are on PATH (the dev shell, or packages.tools)
 kit_run := ".local/tools/bin/{}"            # a prebuilt bin directory
-kit_run := "nix run path:nix/tools#{} --"   # a separate flake that imports the kit's wiring
-graft_run := "nix run github:danielnaab/graft/v2.6.0 --"   # graft's own flake, not the workspace's
+kit_run := "nix run path:nix/workspace#{} --"   # a flake in a subdirectory (content kept out of the store)
+graft_run := "nix run path:nix/workspace#graft --"         # graft from that flake
 ```
 
 The pre-commit hook runs `just check-kb` when the workspace has a `justfile` and `just` is on `PATH`, so it
@@ -103,16 +105,67 @@ follows the same override; otherwise it runs `nix run .#check-kb`.
 
 ### Run the tools without the root flake
 
-Evaluating a workspace's flake copies the repository into the Nix store. A workspace whose content must not be
-copied there can build the tools from a separate flake that does not contain the content. `nix/workspace.nix`
-outputs `packages.<system>.tools`: one `bin/` with every kit tool, `just`, and `markdownlint-cli2`. Build it from
-a small flake (for example in `nix/tools/`) with the same inputs as the seed's `flake.nix` and
-`outputs = import "${inputs.notebook-conventions}/nix/workspace.nix" { inherit inputs; }`, put its `bin/` on
-`PATH` or link it into an ignored folder, and set `kit_run` to match.
+A workspace whose content must not be copied into the Nix store has no flake at its top; its one flake is in a
+subdirectory and the `justfile` names it
+([content kept out of the Nix store](#a-workspace-whose-content-must-not-enter-the-nix-store)). The flake also
+outputs `packages.<system>.tools`, one `bin/` with every kit tool, `just`, and `markdownlint-cli2`, for putting
+them on `PATH` (then `kit_run := "{}"`).
 
-Graft's `outdated`, `upgrade`, and `migrate` also run from graft's own flake against the current directory;
-`sync` runs only from the workspace flake. Check graft's documentation for which commands evaluate the
-workspace flake (`migrate` runs `nix flake check` unless given `--no-check`).
+## A workspace whose content must not enter the Nix store
+
+Evaluating a flake at a Git repository's top copies every tracked file into the Nix store, which every user of
+the machine can read: every `nix run .#…`, `nix develop`, `nix flake check`, and direnv's `use flake`. When the
+notes must not land there, move the workspace's one flake into a subdirectory and run it as a `path:` flake,
+which copies only that directory. This needs graft v2.7.0 or later
+([graft: a flake in a subdirectory](https://github.com/danielnaab/graft/blob/v2.7.0/README.md#a-flake-in-a-subdirectory)).
+
+```text
+nix/workspace/flake.nix    the seed's flake.nix, moved; keep this directory to flake.nix and flake.lock
+nix/workspace/flake.lock
+.scions/                   still at the top
+justfile                   names the path: flake
+.envrc                     use flake path:nix/workspace
+```
+
+In `nix/workspace/flake.nix`, tell graft and the kit's wiring where the flake is:
+
+```nix
+  outputs = inputs: inputs.graft.lib.mkFlake {
+    inherit inputs;
+    scions = [ "meta-knowledge-base" "notebook-conventions" ];
+    flakeDir = "nix/workspace";   # from the repository's top
+    dir = ".scions";              # still from the top
+    outputs = import "${inputs.notebook-conventions}/nix/workspace.nix" {
+      inherit inputs;
+      flakeDir = "nix/workspace";
+    };
+  };
+```
+
+In the `justfile`, below the import:
+
+```just
+kit_run := "nix run path:nix/workspace#{} --"
+graft_run := "nix run path:nix/workspace#graft --"
+```
+
+What changes:
+
+- Lock once from the top with an absolute path, `nix flake lock "path:$PWD/nix/workspace"`: Nix does not write
+  the lock of a relative `path:` flake. Do the same after editing an input by hand; `just upgrade` re-locks by
+  itself.
+- `just check` is the check. The flake's source holds no notes, so it has no task check and no graft check;
+  `just check` runs `graft check` (`.scions/` against the pins) and the kit's tools on the working tree.
+  `nix flake check path:nix/workspace` still evaluates the flake.
+- Name the flake as `path:nix/workspace` in every Nix command, or let `just` do it. Inside a Git checkout a plain
+  path (`.`, `nix/workspace`) or `git+file:` reference copies the whole repository, even with `?dir=`.
+- The pre-commit hook needs `markdownlint-cli2` and `just` on `PATH` (direnv, or the `tools` package): without
+  a `flake.nix` at the top it has no Nix fallback.
+- An upgrade commits `nix/workspace/flake.nix`, `nix/workspace/flake.lock`, and `.scions/` together.
+
+To check the layout, put a random string in a tracked note, run the operations you use (`just`, `just check`,
+direnv), and search the store paths created since for it: `find /nix/store -maxdepth 1 -newer STAMP` then
+`grep -rlF`. A control run of `nix flake metadata "git+file://$PWD?dir=nix/workspace"` finds it.
 
 ## Local overlay
 
@@ -150,6 +203,7 @@ While the kit is `0.x`, any release may change seeded files, so every release ca
 
 ## Sources
 
+- [Graft README: a flake in a subdirectory](https://github.com/danielnaab/graft/blob/v2.7.0/README.md#a-flake-in-a-subdirectory)
 - [Graft README: upgrades and migrations](https://github.com/danielnaab/graft/blob/v2.6.0/README.md#breaking-changes-and-migrations)
 - [Meta-KB dependency playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/manage-kb-dependencies.md)
 - [Seed files](../seed/common/)

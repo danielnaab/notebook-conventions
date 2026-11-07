@@ -15,16 +15,27 @@ IFS='
 set -- $(git diff --cached --name-only --diff-filter=ACM -- '*.md' ':!.scions')
 [ "$#" -gt 0 ] || exit 0
 
+# Without the tools on PATH, fall back to the root flake's dev shell; a workspace whose flake is in a subdirectory
+# (its content kept out of the Nix store) puts them on PATH instead, with direnv or the tools package.
+no_tools() {
+  echo "pre-commit: $1 is not on PATH and there is no flake.nix at the top; put the kit's tools on PATH" >&2
+  echo "  (.scions/notebook-conventions/docs/adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store)" >&2
+  exit 1
+}
 if command -v markdownlint-cli2 >/dev/null 2>&1; then
   markdownlint-cli2 --no-globs "$@"
-else
+elif [ -f flake.nix ]; then
   nix develop --command markdownlint-cli2 --no-globs "$@"
+else
+  no_tools markdownlint-cli2
 fi
 
 # Whole-repository integrity check: links and Sources can break in files that were not staged. Through the
 # workspace's justfile when there is one, so its kit_run override decides how the tool runs.
 if [ -f justfile ] && command -v just >/dev/null 2>&1; then
   just check-kb
-else
+elif [ -f flake.nix ]; then
   nix run .#check-kb
+else
+  no_tools just
 fi

@@ -22,12 +22,21 @@ and recipes pass flags through without Nix's `--`. Released as v0.3.0.
   recipes go.
 - `just graft-check`: graft's `check` (`.scions/` as git would commit it, and graft's workflows, against the pins).
   `just check` runs it first. Needs graft v2.7.0 or later, as `just changelog` does.
+- A workspace whose content must not enter the Nix store: its one flake in a subdirectory (`nix/workspace`), run
+  as a `path:` flake, with graft v2.7.0's `flakeDir`
+  ([adoption](docs/adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store)). `nix/workspace.nix`
+  takes the same `flakeDir`; when it is not `.`, there is no task check, whose source would hold no notes, and
+  `just check` is the check.
 
 ### Changed
 
 - The dev shell has `just` and the kit's tools on `PATH` (the `tools` package).
 - The pre-commit hook runs `just check-kb` when the workspace has a `justfile` and `just` is on `PATH`, so it
-  follows the workspace's `kit_run`; otherwise `nix run .#check-kb` as before.
+  follows the workspace's `kit_run`; otherwise `nix run .#check-kb` as before. It falls back to Nix
+  (`nix develop`, `nix run .#check-kb`) only when `flake.nix` is at the top, and otherwise says to put the tools on
+  `PATH`.
+- "Run the tools without the root flake" no longer suggests a second tools flake: one flake in a subdirectory
+  serves graft and the tools.
 - Docs, skills, the seed, and tool messages name `just` recipes (`just index`, `just move OLD NEW`,
   `just check`) instead of `nix run .#…` forms, which still work underneath.
 - Seed `knowledge-base.yaml`: `justfile` is ask-first.
@@ -57,6 +66,15 @@ From v0.2.2. Work on a branch with a clean tree.
    operations and to verify with `just check`. Keep the first `nix run .#graft` in bootstrap instructions: the
    menu lives in `.scions/`.
 7. In `knowledge-base.yaml` (ask first), add `justfile` to `rules.writes.askFirst`.
+8. Optional: to keep the workspace's content out of the Nix store, move to the subdirectory layout
+   ([adoption](docs/adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store)): `git mv flake.nix
+   flake.lock nix/workspace/`; add `flakeDir = "nix/workspace";` to the `mkFlake` call and to the
+   `nix/workspace.nix` import's arguments; set `kit_run` and `graft_run` in the `justfile` to
+   `nix run path:nix/workspace#…`; change `.envrc` to `use flake path:nix/workspace`; `nix flake lock
+   "path:$PWD/nix/workspace"`, `just sync`, and commit. A workspace that built its tools from a second flake
+   (for example `nix/tools/`) deletes it and points whatever ran those tools at the one flake. Replace
+   `nix run .#`, `nix develop`, and `nix flake check` in the workspace's own files with `just` recipes or
+   `path:nix/workspace` forms.
 
 Done when `just` lists the `check`, `deps`, `migrations`, and `notes` groups, `just check` passes (it now
 includes `graft-check`), and a commit that stages Markdown runs the hook.

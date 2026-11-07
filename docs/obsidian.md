@@ -133,7 +133,9 @@ git config core.hooksPath .githooks
 ```
 
 It falls back to `nix develop` when `markdownlint-cli2` is not on `PATH`, and to `nix run .#check-kb` when the
-workspace has no `justfile` or `just` is not on `PATH`.
+workspace has no `justfile` or `just` is not on `PATH`, but only when `flake.nix` is at the top; a workspace whose
+flake is in a subdirectory puts the tools on `PATH`
+([adoption](adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store)).
 
 ## Sources
 

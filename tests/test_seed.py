@@ -145,6 +145,24 @@ class SeedTest(unittest.TestCase):
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
         self.assertEqual(["--no-globs", "README.md"], record.read_text().split())
 
+    def test_hook_never_runs_nix_without_a_root_flake(self):
+        # A workspace whose flake is in a subdirectory: with no tools on PATH the hook says so, and never runs nix.
+        stubs = self.root / ".stubs"
+        stubs.mkdir()
+        called = self.root / ".nix-called"
+        (stubs / "nix").write_text(f'#!/bin/sh\ntouch "{called}"\n')
+        (stubs / "nix").chmod(0o755)
+        (self.root / "flake.nix").unlink()
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.root, check=True)
+        subprocess.run(["git", "add", "README.md"], cwd=self.root, check=True)
+        for tool in ("git", "sh"):  # PATH holds only these and the stub, whatever else the machine has
+            (stubs / tool).symlink_to(shutil.which(tool))
+        proc = subprocess.run([str(stubs / "sh"), str(self.root / ".githooks/pre-commit")], cwd=self.root,
+                              capture_output=True, text=True, env={**os.environ, "PATH": str(stubs)})
+        self.assertEqual(1, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("no flake.nix at the top", proc.stderr)
+        self.assertFalse(called.exists())
+
     def test_skill_files_are_loadable(self):
         for skill in (self.root / ".scions/notebook-conventions/skills").glob("*/SKILL.md"):
             head = skill.read_text().split("---")[1]
