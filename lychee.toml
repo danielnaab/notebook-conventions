@@ -1,0 +1,4 @@
+# Read by lychee-based link checks (such as a commit hook). Links that resolve only in a workspace, not here: seed/
+# is copied into a new workspace (.scions/..., docs/boundaries.md), and tests/fixtures/ are v0.1 workspace files.
+# Links between the kit's own docs are checked by `nix run .#check-kb`.
+exclude = ['/seed/', '/tests/', '/\.scions/']
