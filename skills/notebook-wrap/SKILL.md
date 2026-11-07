@@ -19,17 +19,21 @@ templates in `notebook/templates/`.
    decisions, authorization boundaries, changed blockers or next actions, and handoffs promptly in their
    canonical record; batch routine summaries at milestones, decisions, topic changes, or known pauses.
 3. Sessions: start or resume a minimal goal and source index at
-   `notebook/sessions/YYYY-MM/YYYY-MM-DD-<topic>/README.md`; add reasoning and artifacts at milestones. Daily-only
+   `notebook/records/sessions/YYYY-MM/YYYY-MM-DD-<topic>.md`, artifacts in a sibling `YYYY-MM-DD-<topic>/` folder;
+   add reasoning and artifacts at milestones. Every note gets a `type`; agent-written notes record `generated`
+   ([layout](../../docs/layout.md#notes)). Daily-only
    outcomes create no session. For delegation record the repo, handle, session, ownership, completion condition,
    and disposition.
 4. Distinguish proposed, changed, committed, pushed, merged, and activated work. State exact verification and
    unrun checks.
-5. Update durable `notebook/wiki/` pages when understanding changes, with lifecycle status and provenance.
-6. In `notebook/daily/YYYY-MM/YYYY-MM-DD.md` use Activity for work and decisions and
+5. Update durable `notebook/wiki/` pages when understanding changes, with lifecycle status and provenance
+   (`sources` frontmatter or `## Sources`). Links stay inside `notebook/`; move notes with `nix run .#move`.
+6. In `notebook/records/daily/YYYY-MM/YYYY-MM-DD.md` use Activity for work and decisions and
    [Lookups](../../docs/workflow.md#lookup-signals) for compact request intent, outcome, and source.
    Sanitize topics, group related requests, never invent counts, and never duplicate what Activity or a session
    already holds. List sessions only when they were active that day. Preserve existing entries.
-7. Update affected task records and the index under [tasks](../../docs/tasks.md). Capture confirmed TODOs,
+7. Update affected task records under [tasks](../../docs/tasks.md), then regenerate indexes with
+   `nix run .#index`. Capture confirmed TODOs,
    not a task per answered question; verify evidence before closing; keep paths stable. Validate with
    `nix run .#check-tasks` when task records change.
 8. Update the root dashboard only when current priorities or open threads change. Never store secrets or full

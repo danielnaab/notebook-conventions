@@ -8,4 +8,4 @@ them. To upgrade: `nix run .#graft upgrade` (or change the tag in `flake.nix`, t
 
 | Scion | Commit |
 |---|---|
-| [meta-knowledge-base](meta-knowledge-base/) | `262707b2deff0892fda50dec0f3020ce3a1125f2` |
+| [meta-knowledge-base](meta-knowledge-base/) | `8223746e072f3effdc7057e9869e986c02fc55f7` |

@@ -16,6 +16,7 @@ TOOLS = ("link_validator", "kb_linter")
 
 
 def run_tool(module: str, src: str, root: Path) -> tuple[int, list[str], str]:
+    """Exit code, violation lines (and likely-typo notices), and the summary as JSON."""
     env = {**os.environ, "PYTHONPATH": src, "PYTHONDONTWRITEBYTECODE": "1"}
     proc = subprocess.run(
         [sys.executable, "-m", module, str(root)], capture_output=True, text=True, env=env
@@ -30,6 +31,10 @@ def run_tool(module: str, src: str, root: Path) -> tuple[int, list[str], str]:
     for v in report["violations"]:
         detail = v.get("target") or v.get("message", "")
         lines.append(f"{module}: {v['rule']}: {v['file']}: {detail}")
+    # Unwritten notes are counted in the summary only; a likely typo is worth a look, so it is listed.
+    for v in report.get("notices", []):
+        if v["rule"] == "likely-typo":
+            lines.append(f"{module}: notice: likely-typo: {v['file']}: {v['target']} ({v['message']})")
     return proc.returncode, lines, json.dumps(report["summary"])
 
 

@@ -1,3 +1,9 @@
+---
+type: Session
+title: "{{title}}"
+description: ""
+---
+
 <!-- Use only when reasoning, context, or artifacts merit a session record. Useful small
      outcomes and user lookup-use signals can be daily-only; incidental mechanics/chatter
      need no note. Reuse a coherent session rather than create one per question. -->

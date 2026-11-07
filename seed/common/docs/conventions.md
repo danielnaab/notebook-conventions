@@ -17,10 +17,11 @@ _None yet. Add a rule here only when the kit's default does not fit, with the re
 The seven core policies bind. Application is the kit's default
 ([conformance](../.scions/notebook-conventions/docs/conformance.md#default-application)) except as listed.
 
-- **Deliberate deviations:** the kit's three (task status vocabulary, no status on dated notes, `YYYY-MM` folders).
+- **Deliberate deviations:** the kit's two (task status vocabulary, `YYYY-MM` folders).
   Add local deviations here with a reason.
 - **Added locally:** [boundaries](boundaries.md) and anything under Local rules.
-- **Verification:** `nix run .#check-kb`, `nix run .#check-tasks`; the pre-commit hook runs the first.
+- **Verification:** `nix run .#check-kb` (links, status, provenance, OKF conformance), `nix run .#check-tasks`, and
+  `nix run .#index -- --check`; the pre-commit hook runs the first.
   Write boundaries and `askFirst` approvals are checked by hand.
 - **Ask-first changes** need <<OWNER>>'s approval for the specific change, recorded in the task, session, daily
   note, or commit message.

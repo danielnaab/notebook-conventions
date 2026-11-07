@@ -83,16 +83,11 @@ class SeedTest(unittest.TestCase):
         pin = re.search(r"danielnaab/graft/v[0-9.]+", (KIT / "flake.nix").read_text()).group(0)
         self.assertIn(pin, (KIT / "seed/common/flake.nix").read_text())
 
-    def test_envrc_waits_for_the_wiring_and_watches_it(self):
-        envrc = (self.root / ".envrc").read_text()
-        self.assertIn('watch_file "$wiring"', envrc)
-        self.assertLess(envrc.index("watch_file"), envrc.index("\n  use flake"))
-        self.assertIn('if [ -f "$wiring" ]', envrc)
-
-    def test_flake_imports_the_scion_wiring_conditionally(self):
+    def test_flake_reads_the_wiring_from_the_pinned_kit(self):
+        # From the input, not .scions/, so the dev shell and checks exist before the first graft.
         flake = (self.root / "flake.nix").read_text()
-        self.assertIn("builtins.pathExists wiring", flake)
-        self.assertTrue((self.root / ".scions/notebook-conventions/nix/workspace.nix").is_file())
+        self.assertIn('import "${inputs.notebook-conventions}/nix/workspace.nix"', flake)
+        self.assertEqual("use flake\n", (self.root / ".envrc").read_text())
 
     def test_task_check_passes_on_empty_workspace(self):
         proc = self.run_tool(str(KIT / "tools/check-tasks.py"), "--root", str(self.root))
@@ -108,6 +103,19 @@ class SeedTest(unittest.TestCase):
             self.skipTest("KBI_SRC not set")
         proc = self.run_tool(str(KIT / "tools/check-kb.py"), "--root", str(self.root), env={"KBI_SRC": kbi})
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+
+    def test_indexes_are_current(self):
+        kbi = os.environ.get("KBI_SRC")
+        if not kbi:
+            self.skipTest("KBI_SRC not set")
+        proc = self.run_tool(str(KIT / "tools/index.py"), "--root", str(self.root), "--check", env={"KBI_SRC": kbi})
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+
+    def test_vault_settings_live_in_the_vault(self):
+        self.assertFalse((self.root / ".obsidian").exists())
+        daily = json.loads((self.root / "notebook/.obsidian/daily-notes.json").read_text())
+        self.assertEqual("records/daily", daily["folder"])
+        self.assertTrue((self.root / "notebook" / (daily["template"] + ".md")).is_file())
 
     def test_hook_wrapper_is_executable_and_runs_the_kit_hook(self):
         wrapper = self.root / ".githooks/pre-commit"

@@ -1,4 +1,7 @@
 ---
+type: Task
+title: "{{title}}"
+description: ""
 status: ready
 created: "{{date:YYYY-MM-DD}}"
 updated: "{{date:YYYY-MM-DD}}"
@@ -10,7 +13,7 @@ project: ""
 
 ## Goal
 
-<!-- What outcome matters? Fill owner/project above; use only known metadata.
+<!-- What outcome matters? Fill description, owner, and project above; use only known metadata.
      Optional: contexts, priority, due, review_on, completed, blocked_by.
      The creation-month path is the identifier; never move it on status changes. -->
 

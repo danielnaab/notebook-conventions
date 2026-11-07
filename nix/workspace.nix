@@ -38,6 +38,18 @@ in {
       check-templates = app pkgs "check-templates" ''
         exec python ${kit}/tools/check-templates.py "$@"
       '' "Report how note templates differ from the pinned canonical copies";
+      index = app pkgs "index" ''
+        export KBI_SRC=${kbiSrc}
+        exec python ${kit}/tools/index.py "$@"
+      '' "Generate the vault's index.md listings from note frontmatter (--check: report stale ones)";
+      move = app pkgs "move" ''
+        export KBI_SRC=${kbiSrc}
+        exec python ${kit}/tools/move.py "$@"
+      '' "Move a note or folder and rewrite the links to and from it";
+      convert = app pkgs "convert" ''
+        export KBI_SRC=${kbiSrc}
+        exec python ${kit}/tools/convert.py "$@"
+      '' "Convert a v0.1 workspace to the v0.2 vault layout";
     }
     // lib.optionalAttrs withTasks {
       check-tasks = app pkgs "check-tasks" ''

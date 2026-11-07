@@ -9,7 +9,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
 
 ## Start a workspace
 
-1. Create the repository. The seed includes an `.envrc` for direnv; the dev shell appears after step 5.
+1. Create the repository. The seed includes an `.envrc` for direnv (`use flake`).
 2. Copy the seed. The profile is copied first so its files win; `-n` never overwrites.
 
    ```sh
@@ -32,7 +32,8 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
    git config core.hooksPath .githooks   # the seeded wrapper runs the kit's hook
    ```
 
-6. Check: `nix run .#check-kb`, `nix run .#check-tasks`, `nix flake check`.
+6. Open `notebook/` as the Obsidian vault.
+7. Check: `nix run .#check-kb`, `nix run .#check-tasks`, `nix run .#index -- --check`, `nix flake check`.
 
 ## What the workspace references in place
 
@@ -40,7 +41,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
 | --- | --- |
 | Conventions | Links into `.scions/notebook-conventions/docs/`; the local `docs/conventions.md` states only local rules. |
 | Agent skills | `.pi/settings.json` lists `../.scions/notebook-conventions/skills` under `skills`. |
-| Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the scion; apps run its `tools/`. |
+| Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the pinned kit input; apps run its `tools/`: `check-kb`, `check-tasks`, `check-templates`, `index`, `move`, and `convert` (the v0.2 upgrade). |
 | Hook | The seeded `.githooks/pre-commit` wrapper runs the kit's hook; `core.hooksPath` is `.githooks`. |
 
 ## Local overlay
@@ -75,5 +76,5 @@ While the kit is `0.x`, any release may change seeded files, so every release ca
 ## Sources
 
 - [Graft README: upgrades and migrations](https://github.com/danielnaab/graft/blob/v2.6.0/README.md#breaking-changes-and-migrations)
-- [Meta-KB dependency playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.0.1/docs/playbooks/manage-kb-dependencies.md)
+- [Meta-KB dependency playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/manage-kb-dependencies.md)
 - [Seed files](../seed/common/)

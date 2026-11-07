@@ -5,11 +5,11 @@
     graft.url = "github:danielnaab/graft/v2.6.0";
     nixpkgs.follows = "graft/nixpkgs";
     meta-knowledge-base = {
-      url = "github:danielnaab/meta-knowledge-base/v1.0.1";
+      url = "github:danielnaab/meta-knowledge-base/v1.1.0";
       flake = false;
     };
     knowledge-base-integrity = {
-      url = "github:danielnaab/knowledge-base-integrity/v0.2.0";
+      url = "github:danielnaab/knowledge-base-integrity/v0.4.0";
       flake = false;
     };
   };

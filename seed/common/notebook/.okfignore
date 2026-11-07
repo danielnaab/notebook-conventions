@@ -1,0 +1,3 @@
+# Not part of the OKF bundle, in .gitignore pattern syntax (OKF issue #58, option B).
+# Templates hold placeholders; the notes they produce carry the type.
+templates/

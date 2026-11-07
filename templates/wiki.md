@@ -1,4 +1,7 @@
 ---
+type: Topic
+title: "{{title}}"
+description: ""
 status: draft
 created: {{date:YYYY-MM-DD}}
 updated: {{date:YYYY-MM-DD}}

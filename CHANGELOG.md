@@ -1,5 +1,72 @@
 # Changelog
 
+## v0.2.0 - 2026-11-06
+
+`notebook/` becomes the Obsidian vault and an [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+bundle, organized by lifecycle. Breaking: notes move, and the checks require a `type` on every note.
+
+### Changed
+
+- **Layout** ([layout](docs/layout.md)): `raw/` (sources as captured), `records/` (dated notes written once:
+  `records/daily/`, `records/sessions/`), `tasks/`, `wiki/`, and `templates/`. Sessions are single files,
+  `records/sessions/YYYY-MM/YYYY-MM-DD-<slug>.md`, with a sibling folder only for artifacts.
+- **Vault:** Obsidian opens `notebook/`; `.obsidian/` moves into it. Code, docs, and `.scions/` stay outside.
+- **Notes** carry OKF frontmatter: a required `type`; `title`, `description`, and `aliases` recommended;
+  `sources`, `generated`, `verified`, and `stale_after` where they apply. Templates carry their note's `type`.
+- **Indexes:** folder `README.md` files inside the vault become generated OKF `index.md` listings; the vault root's
+  declares `okf_version: "0.2"`. Kit guidance that lived in them is in the kit docs.
+- **Tasks:** `tasks/index.md` is generated, sectioned by status; records need `type: Task` and a `description`.
+  `check-tasks` fails when the index is stale instead of checking a hand-kept one.
+- **Links** stay inside the vault; links out of it are URLs or backticked paths. Missing notes are reported as
+  unwritten and do not fail; a link to a note that exists under the same name elsewhere fails.
+- **Write rules:** `rules.writes.writeOnce` marks `records/**` and `raw/**`.
+- **Seed flake:** `flake.nix` imports `nix/workspace.nix` from the pinned kit input instead of `.scions/`, so the
+  dev shell and checks exist before the first graft; `.envrc` is a plain `use flake`.
+- **Pins:** meta-knowledge-base v1.1.0 (raw and historical layers, structured provenance) and
+  knowledge-base-integrity v0.4.0 (OKF checks). The deviation for dated notes without `status` is retired.
+
+### Added
+
+- `nix run .#index` generates the `index.md` listings (`--check` reports stale ones).
+- `nix run .#move -- OLD NEW` moves a note or folder and rewrites relative links to and from it.
+- `nix run .#convert` converts a v0.1 workspace (see Upgrading).
+- `notebook/.okfignore` (`.gitignore` syntax) keeps `templates/` out of the bundle, per option B of
+  [OKF issue #58](https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/58).
+
+### Removed
+
+- `docs/proposal-okf-vault.md`: adopted by this release.
+
+### Upgrading
+
+Work on a branch with a clean tree.
+
+1. In `flake.nix`, set `notebook-conventions` to `v0.2.0`, `meta-knowledge-base` to `v1.1.0`, and
+   `knowledge-base-integrity` to `v0.4.0`; run `nix run .#graft`.
+2. In `flake.nix`, replace the `outputs` with the seed's (`seed/common/flake.nix`): the wiring import reads
+   `"${inputs.notebook-conventions}/nix/workspace.nix"`. If `.envrc` is the seeded watcher, make it `use flake`.
+3. Run `nix run .#convert`. It moves `notebook/daily` and `notebook/sessions` under `notebook/records/`, flattens
+   session folders, turns the seeded folder READMEs into generated indexes, renames existing `index.md` notes to
+   `map.md` (OKF reserves the name), adds `type` by folder, moves `.obsidian/` into `notebook/` and updates its
+   daily-note and template paths and the `.gitignore` patterns, writes `notebook/.okfignore`, and replaces
+   unchanged templates. Links follow every move. It lists what is left as `by hand:` lines. Running it again
+   changes nothing; if it is interrupted, restore with `git checkout -- . && git clean -fd` and run it again.
+4. Do the `by hand:` lines: a `description` on each task; a `type` on notes in folders it does not know; prose from
+   a replaced README that should live on (in `docs/` or a wiki page); local template changes merged with the new
+   frontmatter.
+5. In `knowledge-base.yaml` (ask first; the OKF checks need it), take `paths`, `sources`, and `rules` from the seed's
+   `seed/common/knowledge-base.yaml`: `rules.checks.okf`, the `records/` and `raw/` source classes, and
+   `writeOnce`. Keep local additions.
+6. In `README.md`, `AGENTS.md`, and `docs/`, point at `notebook/index.md` and `notebook/tasks/index.md`; the
+   convert step rewrote links, so search for text: `grep -rn 'notebook/\(daily\|sessions\)\|tasks/README' --exclude-dir=.scions .`.
+   Compare with the seed's `README.md` and `AGENTS.md`, and drop the dated-notes deviation from
+   `docs/conventions.md`.
+7. Fix links that leave the vault (`nix run .#check-kb` lists them as `escapes-bundle`): make them URLs or
+   backticked paths.
+8. Reopen the vault in Obsidian at `notebook/`.
+
+Done when `nix run .#check-kb`, `nix run .#check-tasks`, `nix run .#index -- --check`, and `nix flake check` pass.
+
 ## v0.1.4 - 2026-11-06
 
 ### Fixed

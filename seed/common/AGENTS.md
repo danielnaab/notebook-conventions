@@ -5,7 +5,7 @@ Markdown in Obsidian.
 
 ## Start here
 
-- Read [README.md](README.md) for orientation. Consult [Tasks](notebook/tasks/README.md) when planning,
+- Read [README.md](README.md) for orientation. Consult [Tasks](notebook/tasks/index.md) when planning,
   resuming a thread, or reviewing TODOs; surface only relevant actions and changed blockers.
 - Read [boundaries](docs/boundaries.md) before using any data, account, tool, or service. Boundaries override
   conflicting guidance elsewhere.
@@ -27,10 +27,14 @@ Markdown in Obsidian.
 
 - Choose the smallest useful record under the kit's [logging levels](.scions/notebook-conventions/docs/workflow.md#logging-levels):
   no log, daily-only, or session + daily. Decide by future usefulness, not length or tool count.
-- Task records in `notebook/tasks/` own current state; sessions own reasoning; wiki pages own durable synthesis.
-  Follow the kit's [task workflow](.scions/notebook-conventions/docs/tasks.md).
+- `notebook/` is the vault and an OKF bundle laid out by lifecycle (kit [layout](.scions/notebook-conventions/docs/layout.md)):
+  every note has a `type`; links are relative Markdown links that stay inside `notebook/`.
+- Task records in `notebook/tasks/` own current state; session records in `notebook/records/sessions/` own reasoning;
+  wiki pages own durable synthesis. Follow the kit's [task workflow](.scions/notebook-conventions/docs/tasks.md).
+- Move notes with `nix run .#move -- OLD NEW`; regenerate folder indexes with `nix run .#index`.
 - Skills `notebook-start` and `notebook-wrap` come from the kit (see `.pi/settings.json`).
-- Maintain durable synthesis in `notebook/wiki/` with lifecycle frontmatter and `## Sources`.
+- Maintain durable synthesis in `notebook/wiki/` with lifecycle frontmatter and provenance (`sources` frontmatter
+  or `## Sources`).
 - Read only notes relevant to the task; do not bulk ingest the vault.
 
 ## Write rules

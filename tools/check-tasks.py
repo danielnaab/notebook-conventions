@@ -1,6 +1,7 @@
 """Read-only validation of task records and their current-work index. No scheduling/actions.
 
-The tasks folder is `notebook/tasks` unless knowledge-base.yaml sets `rules.checks.tasks.path`.
+The tasks folder is `notebook/tasks` unless knowledge-base.yaml sets `rules.checks.tasks.path`. Its index.md is
+generated (`nix run .#index`); this check fails when it is missing or stale.
 """
 from __future__ import annotations
 
@@ -8,17 +9,17 @@ import argparse
 from datetime import date
 from pathlib import Path
 import re
+import sys
 from urllib.parse import unquote
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import vault  # noqa: E402
+
 STATUSES = {"ready", "in-progress", "waiting", "later", "completed", "canceled"}
 ACTIVE = STATUSES - {"completed", "canceled"}
-SECTIONS = {
-    "Ready": "ready", "In progress": "in-progress", "Waiting": "waiting",
-    "Later": "later", "Recently completed": "completed",
-}
-REQUIRED = {"status", "created", "updated", "owner", "project"}
+REQUIRED = {"type", "description", "status", "created", "updated", "owner", "project"}
 DEFAULT_TASKS_PATH = "notebook/tasks"
 RECORD = re.compile(r"^(\d{4}-\d{2})/([a-z0-9]+(?:-[a-z0-9]+)*)(?:\.md|/README\.md)$")
 LINK = re.compile(r"\[[^\]\n]*\]\(([^\s)]+)\)")
@@ -101,8 +102,8 @@ def validate(root: Path) -> list[str]:
     artifact_folders = {p.parent for p in record_paths if p.name == "README.md"}
     for path in candidates:
         rel = path.relative_to(root).as_posix()
-        if path == folder / "README.md":
-            continue
+        if path.name in vault.RESERVED:
+            continue  # generated listings (index.md) and logs are not task records
         if path not in record_paths:
             if not any(path.is_relative_to(p) for p in artifact_folders):
                 error(rel, "unsupported task path (use creation-month/task-name.md)")
@@ -123,7 +124,11 @@ def validate(root: Path) -> list[str]:
         if not isinstance(status, str) or status not in STATUSES:
             error(rel, "invalid status")
             status = None
-        for key in ["owner", "project"]:
+        if "type" in meta and meta["type"] != "Task":
+            error(rel, "type must be Task")
+        for key in ["description", "owner", "project"]:
+            if key not in meta:
+                continue
             if not isinstance(meta.get(key), str) or not meta[key].strip():
                 error(rel, f"{key} must be a nonempty string")
         dates = {}
@@ -209,46 +214,12 @@ def validate(root: Path) -> list[str]:
 
     for rel in records:
         visit(rel)
-    index = folder / "README.md"
+    index = folder / vault.INDEX
     index_rel = index.relative_to(root).as_posix()
     if not index.is_file() or not safe(index):
-        return errors + [f"{index_rel}: missing index or symlink"]
-    try:
-        meta, body = frontmatter(index.read_text())
-    except (ValueError, TypeError, yaml.YAMLError, UnicodeError):
-        return errors + [f"{index_rel}: invalid frontmatter"]
-    if meta.get("status") != "living":
-        error(index_rel, "index must have status living")
-    indexed, section, closed = set(), None, 0
-    for line in prose(body).splitlines():
-        if line.startswith("## "):
-            section = line[3:].strip()
-        for target in LINK.findall(line):
-            name = unquote(target.split("#", 1)[0])
-            if re.match(r"[a-zA-Z][\w+.-]*:", name) or not name:
-                continue
-            path = (folder / name).resolve()
-            if not path.exists():
-                error(index_rel, "missing local navigation target")
-            if not path.is_relative_to(folder):
-                continue
-            rel = path.relative_to(root).as_posix()
-            if rel not in records:
-                error(index_rel, "index link must identify a task record")
-                continue
-            if rel in indexed:
-                error(index_rel, "duplicate task link")
-            indexed.add(rel)
-            if records[rel].get("status") != SECTIONS.get(section):
-                error(index_rel, "task status does not match index section")
-            if section == "Recently completed":
-                closed += 1
-    if closed > 10:
-        error(index_rel, "Recently completed exceeds ten links")
-    for rel, meta in records.items():
-        status = meta.get("status")
-        if isinstance(status, str) and status in ACTIVE and rel not in indexed:
-            error(rel, "active task is missing from index")
+        return errors + [f"{index_rel}: missing index or symlink (run nix run .#index)"]
+    if index.read_text() != vault.task_index(folder):
+        error(index_rel, "index is stale: run nix run .#index")
     return errors
 
 

@@ -6,7 +6,7 @@ description: Orient work in a Markdown work-memory workspace using its tasks, da
 # Orient a work session
 
 Read `AGENTS.md`, `knowledge-base.yaml`, the root `README.md` dashboard, and the small task index
-`notebook/tasks/README.md` from the workspace root. Reuse what is already in context.
+`notebook/tasks/index.md` from the workspace root. Reuse what is already in context.
 
 1. Infer the focus from the request and conversation; do not require arguments. Ask only if a material
    choice cannot be resolved safely.
