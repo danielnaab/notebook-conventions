@@ -61,7 +61,7 @@ class IndexTest(VaultTestCase):
         self.assertIn("* [records](records/) - Dated notes, written once", indexes["notebook/index.md"])
         self.assertNotIn("templates", indexes["notebook/index.md"])
         self.assertEqual(
-            "# Wiki\n\n## Notes\n\n* [Ants](a.md)\n* [Bee \\[notes\\]](b.md) - About bees.\n",
+            "# Wiki\n\n## Notes\n\n* [Ants](a.md)\n* [Bee (notes)](b.md) - About bees.\n",
             indexes["notebook/wiki/index.md"],
         )
         daily = indexes["notebook/records/daily/2026-11/index.md"]
@@ -173,3 +173,53 @@ class ConvertTest(VaultTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewRegressionTest(VaultTestCase):
+    """Cases from the 2026-11-06 review of the vault tools."""
+
+    def test_link_forms_the_scanner_must_find(self):
+        text = ("A [long link\ntext](b.md), [in [x]](b.md), [![img](i.png)](b.md), [p](p(1).md)\n"
+                "[ref]: b.md\n  [r2]: <b.md> \"T\"\n`[code](b.md)`\n    \n")
+        self.assertEqual(["b.md", "b.md", "i.png", "b.md", "p(1).md", "b.md", "<b.md>"],
+                         [link.destination for link in vault.links(text)])
+
+    def test_move_rewrites_every_link_form(self):
+        self.write("notebook/wiki/b.md", "# B\n")
+        self.write("notebook/wiki/p(1).md", "# P\n")
+        self.write("notebook/wiki/a.md", "[long\ntext](b.md) [![i](i.png)](b.md) [p](p(1).md)\n[ref]: b.md\n")
+        self.tool("move.py", "notebook/wiki/b.md", "notebook/wiki/sub/b.md")
+        self.tool("move.py", "notebook/wiki/p(1).md", "notebook/wiki/sub/p(1).md")
+        self.assertEqual("[long\ntext](sub/b.md) [![i](i.png)](sub/b.md) [p](sub/p%281%29.md)\n[ref]: sub/b.md\n",
+                         self.read("notebook/wiki/a.md"))
+
+    def test_rooted_links_outside_the_bundle_are_left_alone(self):
+        self.write("notebook/wiki/b.md", "# B\n")
+        self.write("README.md", "[b](/wiki/b.md)\n")
+        self.tool("move.py", "notebook/wiki/b.md", "notebook/wiki/c.md")
+        self.assertEqual("[b](/wiki/b.md)\n", self.read("README.md"))
+
+    def test_index_entries_encode_parentheses(self):
+        self.write("notebook/wiki/Untitled (1).md", "---\ntype: Topic\ntitle: x\\\n---\n")
+        self.assertIn("* [x](Untitled%20%281%29.md)", vault.expected_indexes(self.root)["notebook/wiki/index.md"])
+
+    def test_tasks_outside_the_bundle_get_an_index(self):
+        (self.root / "knowledge-base.yaml").write_text(KB_YAML + "    tasks:\n      path: work/tasks\n")
+        self.write("notebook/wiki/a.md", "---\ntype: Topic\n---\n")
+        self.write("work/tasks/2026-11/t.md", "---\nstatus: ready\n---\n# T\n")
+        self.assertIn("work/tasks/index.md", vault.expected_indexes(self.root))
+
+    def test_convert_keeps_folder_notes_and_hand_written_indexes(self):
+        self.write("notebook/wiki/README.md", (KIT / "tests/fixtures/v0.1-wiki-README.md").read_text())
+        self.write("notebook/wiki/kafka/README.md", "---\nstatus: stable\n---\n# Kafka\n\nProse.\n")
+        self.write("notebook/wiki/index.md", "# Hand-written map\n\n[Kafka](kafka/README.md)\n")
+        self.write(".gitignore", "/.obsidian/workspace.json\n")
+        proc = self.tool("convert.py")
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertIn("Prose.", self.read("notebook/wiki/kafka/README.md"))
+        self.assertIn("# Hand-written map", self.read("notebook/wiki/map.md"))
+        self.assertIn("now map.md", proc.stdout)
+        self.assertIn("a note named README.md", proc.stdout)
+        self.assertNotIn("wiki/README.md had local prose", proc.stdout)
+        self.assertIn("* [Hand-written map](map.md)", self.read("notebook/wiki/index.md"))
+        self.assertEqual("/notebook/.obsidian/workspace.json\n", self.read(".gitignore"))

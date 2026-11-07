@@ -3,11 +3,13 @@
 
 Run from the workspace root on a clean branch, after upgrading the kit to v0.2. It changes files only under
 notebook/, the root .obsidian/ and .gitignore, and links in Markdown files; it prints what is left to do by hand.
-Re-running it is safe: each step is skipped when already done. --dry-run lists the steps without changing anything.
+Running it again after it finishes changes nothing. If it is interrupted, restore the branch
+(`git checkout -- . && git clean -fd`) and run it again. --dry-run lists the first moves without changing anything.
 
 1. Moves notebook/daily and notebook/sessions under notebook/records/, rewriting links.
 2. Flattens each session folder's README.md into YYYY-MM-DD-<slug>.md; other files stay in the folder beside it.
-3. Replaces folder README.md files in the bundle with generated index.md listings; links follow.
+3. Replaces the seeded folder README.md files (daily, sessions, raw, tasks, wiki) with generated index.md listings;
+   links follow. Other README.md files and existing index.md files (renamed to map.md) are kept and reported.
 4. Adds `type` to notes that lack one, by folder (Daily Note, Session, Task, Topic, Source).
 5. Moves .obsidian/ into notebook/, points its daily-note and template settings at the new folders, and
    re-anchors the .gitignore patterns for it.
@@ -30,8 +32,8 @@ import vault
 
 KIT = Path(__file__).resolve().parents[1]
 NOTEBOOK = "notebook"
-# sha256 prefixes of the v0.1.0–v0.1.4 templates and seeded folder READMEs: an exact match is unchanged
-# seed content, safe to replace; anything else is reported.
+# sha256 prefixes of the v0.1.0–v0.1.4 templates (an exact match is unchanged, safe to replace) and of the
+# seeded folder READMEs' prose (headings, lists, and link targets left out, so their listings may differ).
 V01_TEMPLATES = {
     "daily.md": "b966bd2d9c880f53",
     "session.md": "bd2559fd72bab343",
@@ -39,12 +41,14 @@ V01_TEMPLATES = {
     "wiki.md": "d5c6c77f447cb829",
 }
 V01_READMES = {
-    "daily": "18ca2e88326bdaf8",
-    "raw": "fe971b48d71635c5",
-    "sessions": "60ba87d9f6a436f1",
-    "tasks": "7a0824ae505f4eb1",
-    "wiki": "a10f89f3173d33b8",
+    "daily": "86b02c0813d8bb84",
+    "raw": "222e6ec13f4d43db",
+    "sessions": "1c63101cd2a5868b",
+    "tasks": "dd57c68aa82ec0d2",
+    "wiki": "dec76a7243d0e224",
 }
+# Where each seeded folder is after the moves.
+V02_FOLDERS = {"daily": "records/daily", "sessions": "records/sessions", "raw": "raw", "tasks": "tasks", "wiki": "wiki"}
 TYPES = (
     (re.compile(r"^records/daily/"), "Daily Note"),
     (re.compile(r"^records/sessions/\d{4}-\d{2}/[^/]+\.md$"), "Session"),
@@ -57,6 +61,15 @@ SESSION_README = re.compile(r"^notebook/records/sessions/(\d{4}-\d{2})/([^/]+)/R
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+
+def prose_digest(text: str) -> str:
+    """Hash of a README's prose: frontmatter, headings, list items, and link targets left out."""
+    text = re.sub(r"\A---\n.*?\n---\n", "", text, flags=re.S)
+    text = re.sub(r"\]\([^)]*\)", "]()", text)
+    keep = [line.strip() for line in text.splitlines()
+            if line.strip() and not re.match(r"\s*(#|[-*] |\d+\. |_None)", line)]
+    return hashlib.sha256("\n".join(keep).encode()).hexdigest()[:16]
 
 
 class Converter:
@@ -83,14 +96,16 @@ class Converter:
     def run(self) -> None:
         if not (self.root / NOTEBOOK).is_dir():
             sys.exit(f"convert: no {NOTEBOOK}/ here; run from the workspace root")
-        # Before any move rewrites their links: which folder READMEs are unchanged seed content.
+        # Which seeded folder READMEs hold only seed prose (by their v0.2 folder), before anything moves.
         self.seeded = {
-            folder: digest(self.root / NOTEBOOK / folder / "README.md") == expected
+            V02_FOLDERS[folder]: prose_digest((self.root / NOTEBOOK / folder / "README.md").read_text()) == expected
             for folder, expected in V01_READMES.items()
             if (self.root / NOTEBOOK / folder / "README.md").is_file()
         }
+        self.protected: set[str] = set()
         if not self.dry_run:
             self.write_okfignore()
+            self.rename_existing_indexes()
         self.move(f"{NOTEBOOK}/daily", f"{NOTEBOOK}/records/daily")
         self.move(f"{NOTEBOOK}/sessions", f"{NOTEBOOK}/records/sessions")
         if self.dry_run:
@@ -102,6 +117,8 @@ class Converter:
         self.obsidian()
         self.templates()
         for rel, content in vault.expected_indexes(self.root).items():
+            if rel in self.protected:
+                continue
             path = self.root / rel
             if not path.is_file() or path.read_text(encoding="utf-8") != content:
                 path.write_text(content, encoding="utf-8")
@@ -120,27 +137,48 @@ class Converter:
             if leftover.is_dir() and not any(leftover.iterdir()):
                 leftover.rmdir()
 
+    def rename_existing_indexes(self) -> None:
+        """In a v0.1 vault index.md and log.md were ordinary notes; OKF reserves them, so keep them aside."""
+        root_meta, _ = vault.frontmatter(vault._read(self.root / NOTEBOOK / vault.INDEX))
+        if root_meta and "okf_version" in root_meta:
+            return  # already converted
+        for path in sorted((self.root / NOTEBOOK).rglob("*.md")):
+            rel = path.relative_to(self.root).as_posix()
+            if any(p.startswith(".") for p in Path(rel).parts) or path.name not in vault.RESERVED:
+                continue
+            renamed = path.with_name("map.md" if path.name == vault.INDEX else "changelog.md")
+            if renamed.exists():
+                self.protected.add(rel)
+                self.manual.append(f"{rel} is reserved by OKF, and {renamed.name} exists beside it: rename it")
+                continue
+            self.move(rel, renamed.relative_to(self.root).as_posix())
+            self.manual.append(f"{rel} was an ordinary note; it is now {renamed.name} (OKF reserves {path.name})")
+
     def readmes_to_indexes(self) -> None:
-        b = vault.bundle(self.root)
-        for readme in sorted((self.root / NOTEBOOK).rglob("README.md")):
+        for folder, seeded in self.seeded.items():
+            readme = self.root / NOTEBOOK / folder / "README.md"
+            if not readme.is_file():
+                continue
             rel = readme.relative_to(self.root).as_posix()
-            folder = readme.parent.relative_to(self.root / NOTEBOOK).as_posix()
-            if any(p.startswith(".") for p in Path(rel).parts) or b.is_ignored(rel):
-                continue
-            if folder.startswith("tasks/") or folder == "templates":
-                continue  # a folder-shaped task's README is the task; templates/ is not in the bundle
-            if folder.startswith("records/sessions/"):
-                self.manual.append(f"{rel}: not a session index; rename it or leave it")
-                continue
-            if folder != "tasks" and not self.seeded.get(folder.replace("records/", ""), False):
+            if not seeded:
                 self.manual.append(
                     f"{rel} had local prose; it is replaced by a generated index (the prose is in git history)"
                 )
             target = readme.with_name(vault.INDEX).relative_to(self.root).as_posix()
             if (self.root / target).exists():
+                self.protected.add(target)
                 self.manual.append(f"{rel} and {target} both exist: keep one")
                 continue
             self.move(rel, target)
+        b = vault.bundle(self.root)
+        for readme in sorted((self.root / NOTEBOOK).rglob("README.md")):
+            rel = readme.relative_to(self.root).as_posix()
+            folder = readme.parent.relative_to(self.root / NOTEBOOK).as_posix()
+            if any(p.startswith(".") for p in Path(rel).parts) or b.is_ignored(rel) or folder.startswith("tasks/"):
+                continue  # folder-shaped tasks keep README.md; templates/ is outside the bundle
+            self.manual.append(
+                f"{rel} is a note named README.md: give it a `type`, or move it to `{folder}.md` with `nix run .#move`"
+            )
 
     def add_types(self) -> None:
         b = vault.bundle(self.root)
@@ -190,7 +228,7 @@ class Converter:
         gitignore = self.root / ".gitignore"
         if gitignore.is_file():
             text = gitignore.read_text()
-            updated = re.sub(r"(?m)^(!?)\.obsidian/", rf"\1{NOTEBOOK}/.obsidian/", text)
+            updated = re.sub(r"(?m)^(!?)(/?)\.obsidian/", rf"\1\2{NOTEBOOK}/.obsidian/", text)
             if updated != text:
                 gitignore.write_text(updated)
                 self.log("re-anchored .obsidian/ patterns in .gitignore")

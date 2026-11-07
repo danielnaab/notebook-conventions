@@ -60,12 +60,16 @@ def move(root: Path, old: str, new: str, dry_run: bool = False) -> tuple[list[st
         here, there = os.path.dirname(rel), os.path.dirname(new_rel)
         text = path.read_text(encoding="utf-8")
 
-        def rewrite(destination: str, here=here, there=there) -> str | None:
+        in_bundle = b.contains(rel)
+
+        def rewrite(destination: str, here=here, there=there, in_bundle=in_bundle) -> str | None:
             target_path, suffix, angle = vault.split_destination(destination)
             rooted = target_path.startswith("/")
+            if rooted and not in_bundle:
+                return None  # outside the bundle, "/" means the host's root: leave it
             base = b.root if rooted else here
             resolved = os.path.normpath(os.path.join(base, target_path.lstrip("/"))).replace(os.sep, "/")
-            if resolved.startswith(".."):
+            if rooted and resolved.startswith(".."):
                 return None
             moved = mapped(resolved)
             if moved == resolved and here == there:
@@ -82,17 +86,19 @@ def move(root: Path, old: str, new: str, dry_run: bool = False) -> tuple[list[st
 
         updated = vault.rewrite_links(text, rewrite)
         if updated != text:
-            updates[path] = updated
+            updates[new_rel] = updated
             changed.append(new_rel)
         plain = vault.links_masked_text(updated)
         if any(name in plain for name in mention_names):
             mentions.append(new_rel)
 
     if not dry_run:
-        for path, text in updates.items():
-            path.write_text(text, encoding="utf-8")
+        # Move first, then write the new links into each file at its new path. Interrupted in between, the links
+        # are stale and the checks report them; written first, a re-run would rewrite them a second time.
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(source), str(target))
+        for new_rel, text in updates.items():
+            (root / new_rel).write_text(text, encoding="utf-8")
     return changed, mentions
 
 

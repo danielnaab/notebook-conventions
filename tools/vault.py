@@ -43,8 +43,15 @@ RECENTLY_COMPLETED = 10
 DATED = re.compile(r"^\d{4}-\d{2}")
 FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 INLINE_CODE = re.compile(r"(`+).+?\1")
-# [text](destination "optional title"), destination bare or in <angle brackets>.
-LINK = re.compile(r"(!?\[(?:[^\]\\]|\\.)*\])\((<[^>\n]*>|[^)\s]*)((?:\s+(?:\"[^\"]*\"|'[^']*'))?)\)")
+# [text](destination "optional title"): link text may span lines and hold one level of brackets
+# ([a [b]](x), [![img](i.png)](x)); the destination is bare, with balanced parentheses, or in <angle brackets>.
+_LABEL = r"\[(?:[^\[\]\\]|\\.|\[(?:[^\[\]\\]|\\.)*\])*\]"
+_BARE = r"(?:[^()\s\\]|\\.|\((?:[^()\s\\]|\\.)*\))*"
+LINK = re.compile(
+    rf"(!?{_LABEL})\((<[^>\n]*>|{_BARE})((?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?)\s*\)"
+)
+# A reference definition: [label]: destination "optional title"
+REFERENCE = re.compile(r"(?m)^ {0,3}\[(?:[^\]\\\n]|\\.)+\]:[ \t]*(<[^>\n]*>|\S+)")
 SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:")
 FRONTMATTER = re.compile(r"\A---[ \t]*\n(.*?)^---[ \t]*$\n?", re.S | re.M)
 
@@ -107,11 +114,10 @@ class Link:
     destination: str  # as written, angle brackets included
 
 
-def links(text: str) -> list[Link]:
-    """Markdown links outside fenced code, inline code, and HTML comments."""
-    found: list[Link] = []
+def masked(text: str) -> str:
+    """The text with fenced code, inline code, and HTML comments blanked; offsets and newlines kept."""
+    out: list[str] = []
     fence = ""
-    offset = 0
     in_comment = False
     for line in text.splitlines(keepends=True):
         marker = FENCE.match(line)
@@ -119,14 +125,34 @@ def links(text: str) -> list[Link]:
             if marker and marker.group(1)[0] == fence[0] and len(marker.group(1)) >= len(fence) \
                     and line.strip() == marker.group(1):
                 fence = ""
+            out.append(_blank(line))
         elif marker and not in_comment:
             fence = marker.group(1)
+            out.append(_blank(line))
         else:
-            masked, in_comment = _mask(line, in_comment)
-            for match in LINK.finditer(masked):
-                found.append(Link(offset + match.start(2), offset + match.end(2), line[match.start(2):match.end(2)]))
-        offset += len(line)
-    return found
+            line_masked, in_comment = _mask(line, in_comment)
+            out.append(line_masked)
+    return "".join(out)
+
+
+def _blank(line: str) -> str:
+    return re.sub(r"[^\n]", " ", line)
+
+
+def links(text: str) -> list[Link]:
+    """Inline links (and links inside their text) and reference definitions, outside code and comments."""
+    hidden = masked(text)
+    found: list[Link] = []
+
+    def scan(start: int, end: int) -> None:
+        for match in LINK.finditer(hidden, start, end):
+            found.append(Link(match.start(2), match.end(2), text[match.start(2):match.end(2)]))
+            scan(match.start(1) + 1, match.end(1) - 1)  # [![image](i.png)](page.md)
+
+    scan(0, len(hidden))
+    for match in REFERENCE.finditer(hidden):
+        found.append(Link(match.start(1), match.end(1), text[match.start(1):match.end(1)]))
+    return sorted(found, key=lambda link: link.start)
 
 
 def _mask(line: str, in_comment: bool) -> tuple[str, bool]:
@@ -161,7 +187,7 @@ def split_destination(destination: str) -> tuple[str, str, bool]:
 def format_destination(path: str, suffix: str, angle: bool) -> str:
     if angle:
         return f"<{path}{suffix}>"
-    return quote(path, safe="/._-~()!$&'*+,;=:@") + suffix
+    return quote(path, safe="/._-~!$&'*+,;=:@") + suffix
 
 
 def is_local(destination: str) -> bool:
@@ -208,8 +234,10 @@ def _title(meta: dict | None, path: Path, body: str = "") -> str:
 
 
 def _entry(title: str, href: str, description: str | None) -> str:
-    title = " ".join(title.split()).replace("[", "\\[").replace("]", "\\]")
-    line = f"* [{title}]({quote(href, safe='/._-~()')})"
+    # OKF index entries are matched as [text](url): brackets in a title become parentheses, a trailing
+    # backslash is dropped, and the URL is fully encoded, parentheses included.
+    title = " ".join(title.split()).replace("[", "(").replace("]", ")").rstrip("\\") or href
+    line = f"* [{title}]({quote(href, safe='/._-~')})"
     description = " ".join(str(description).split()) if description else ""
     return f"{line} - {description}" if description else line
 
@@ -259,6 +287,9 @@ def expected_indexes(root: Path) -> dict[str, str]:
 
     if base.is_dir():
         visit(base)
+    tasks = root / tasks_rel
+    if tasks.is_dir() and not b.contains(tasks_rel):
+        result[f"{tasks_rel}/{INDEX}"] = task_index(tasks)  # a tasks folder outside the bundle
     return result
 
 
