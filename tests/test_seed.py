@@ -157,7 +157,7 @@ class SeedTest(unittest.TestCase):
 
 JUST = shutil.which("just")
 KIT_RECIPES = {
-    "check": ["check", "check-kb", "check-tasks", "check-templates", "check-obsidian"],
+    "check": ["check", "graft-check", "check-kb", "check-tasks", "check-templates", "check-obsidian"],
     "notes": ["index", "move"],
     "deps": ["outdated", "changelog", "upgrade", "migrate", "sync"],
     "migrations": ["convert", "upgrade-obsidian"],
@@ -221,7 +221,8 @@ class JustMenuTest(unittest.TestCase):
     def test_check_runs_every_kit_check(self):
         proc = self.just("check")
         self.assertEqual(0, proc.returncode, proc.stderr)
-        self.assertEqual([["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"]], self.calls())
+        self.assertEqual([["graft", "check"], ["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"]],
+                         self.calls())
 
     def test_arguments_pass_through_intact(self):
         proc = self.just("move", "notebook/a b.md", "notebook/c.md", "--dry-run", cwd=self.root / "notebook")
@@ -246,8 +247,8 @@ class JustMenuTest(unittest.TestCase):
                            f'\ncheck-local:\n    @echo local >> "{self.log}"\n')
         proc = self.just("check", env=env)
         self.assertEqual(0, proc.returncode, proc.stderr)
-        self.assertEqual([["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"], ["local"]],
-                         self.calls())
+        self.assertEqual([["graft", "check"], ["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"],
+                          ["local"]], self.calls())
         self.just("outdated", env=env)
         self.assertEqual(["graft", "outdated"], self.calls()[-1])
 
@@ -256,7 +257,9 @@ class JustMenuTest(unittest.TestCase):
         if not kbi:
             self.skipTest("KBI_SRC not set")
         tools = self.root / ".scions/notebook-conventions/tools"
-        env = {**os.environ, "KIT_RUN": f"{sys.executable} {tools}/{{}}.py", "PYTHONDONTWRITEBYTECODE": "1"}
+        # graft check needs the workspace's flake; its own tests cover it
+        env = {**os.environ, "KIT_RUN": f"{sys.executable} {tools}/{{}}.py", "GRAFT_RUN": "true",
+               "PYTHONDONTWRITEBYTECODE": "1"}
         proc = self.just("check", env=env)
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
         self.assertIn("all checks passed", proc.stdout)

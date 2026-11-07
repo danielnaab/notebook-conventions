@@ -20,6 +20,8 @@ and recipes pass flags through without Nix's `--`. Released as v0.3.0.
   ([run the tools without the root flake](docs/adoption.md#run-the-tools-without-the-root-flake)).
 - Seed: `justfile`, which imports the menu, lists it as the default recipe, and shows where overrides and local
   recipes go.
+- `just graft-check`: graft's `check` (`.scions/` as git would commit it, and graft's workflows, against the pins).
+  `just check` runs it first. Needs graft v2.7.0 or later, as `just changelog` does.
 
 ### Changed
 
@@ -34,7 +36,9 @@ and recipes pass flags through without Nix's `--`. Released as v0.3.0.
 
 From v0.2.2. Work on a branch with a clean tree.
 
-1. `nix run .#graft upgrade notebook-conventions@v0.3.0` (the last time in this form).
+1. Upgrade graft to v2.7.0 or later first (`nix run .#graft upgrade graft@v2.7.0`, then its Upgrading steps):
+   `just check` runs `graft check` and `just changelog` runs `graft changelog`, which earlier graft lacks. Then
+   `nix run .#graft upgrade notebook-conventions@v0.3.0` (the last time in this form).
 2. Copy the seed's justfile: `cp -n .scions/notebook-conventions/seed/common/justfile justfile` and
    `git add justfile`. If the workspace already has a `justfile`, add the seed's two `set` lines, its `import`,
    and its `default` recipe at the top instead, and rename any local recipe whose name collides with a kit
@@ -54,8 +58,8 @@ From v0.2.2. Work on a branch with a clean tree.
    menu lives in `.scions/`.
 7. In `knowledge-base.yaml` (ask first), add `justfile` to `rules.writes.askFirst`.
 
-Done when `just` lists the `check`, `deps`, `migrations`, and `notes` groups, `just check` passes, and a commit
-that stages Markdown runs the hook.
+Done when `just` lists the `check`, `deps`, `migrations`, and `notes` groups, `just check` passes (it now
+includes `graft-check`), and a commit that stages Markdown runs the hook.
 
 ## v0.2.2 - 2026-11-07
 

@@ -35,8 +35,8 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
    ```
 
 6. Open `notebook/` as the Obsidian vault.
-7. Check: `just check` (check-kb, check-tasks, `index --check`, check-obsidian), `just check-obsidian --strict`,
-   and `nix flake check`. `just` alone lists every operation.
+7. Check: `just check` (graft check, check-kb, check-tasks, `index --check`, check-obsidian),
+   `just check-obsidian --strict`, and `nix flake check`. `just` alone lists every operation.
 
 The first graft is `nix run .#graft` because the seeded `justfile` imports the kit's recipes from `.scions/`,
 which does not exist until then.
@@ -58,7 +58,7 @@ upgrade. `just` lists it by group:
 
 | Group | Recipes |
 | --- | --- |
-| `check` | `check` (check-kb, check-tasks, `index --check`, check-obsidian, then `check-local`), `check-kb`, `check-tasks`, `check-templates`, `check-obsidian` |
+| `check` | `check` (graft-check, check-kb, check-tasks, `index --check`, check-obsidian, then `check-local`), `graft-check`, `check-kb`, `check-tasks`, `check-templates`, `check-obsidian` |
 | `notes` | `index`, `move OLD NEW` |
 | `deps` | `outdated`, `changelog [NAMES]`, `upgrade [TARGETS]`, `migrate`, `sync` (graft with no arguments) |
 | `migrations` | `upgrade-obsidian`, `convert` |

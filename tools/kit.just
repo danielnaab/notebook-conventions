@@ -19,12 +19,18 @@ graft_run := env("GRAFT_RUN", "nix run .#graft --")
 
 # Run every kit check, then the workspace's check-local
 [group('check')]
-check: check-kb check-tasks (index "--check") check-obsidian check-local
+check: graft-check check-kb check-tasks (index "--check") check-obsidian check-local
     @echo "check: all checks passed"
 
 # A workspace defines check-local (with `set allow-duplicate-recipes`) to add its own checks to `check`
 [private]
 check-local:
+
+# Check that .scions/ (as git would commit it) and graft's workflows match the pins
+[group('check')]
+[positional-arguments]
+graft-check *args:
+    {{graft_run}} check "$@"
 
 # Check links, lifecycle status, and Sources with knowledge-base-integrity
 [group('check')]
