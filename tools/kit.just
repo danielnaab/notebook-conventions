@@ -90,7 +90,7 @@ upgrade *targets:
     @echo "  1. Read each upgraded scion's CHANGELOG.md, its Upgrading sections in particular: just changelog"
     @echo "  2. Brief an agent or yourself on what moved:                                       just migrate"
     @echo "  3. Apply the Upgrading steps, then verify:                                          just check"
-    @echo "  4. Commit flake.nix, flake.lock, .scions/, and the workspace changes together."
+    @echo "  4. Commit the flake (flake.nix, flake.lock), .scions/, and the workspace changes together."
 
 # Print a migration brief for an upgrade: what moved, the changelog text, the scion diff
 [group('deps')]

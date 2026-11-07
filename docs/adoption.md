@@ -190,8 +190,9 @@ seeded for the same reason; `just check-obsidian` lists which still match the ki
 5. If the release changed seeded Obsidian settings, quit Obsidian and run `just upgrade-obsidian`
    ([Obsidian](obsidian.md#keeping-settings-in-sync)); it merges them into the vault's copies and keeps local
    changes.
-6. Apply the steps, run `just check` and `nix flake check`, then commit `flake.nix`, `flake.lock`, `.scions/`,
-   and the workspace changes together.
+6. Apply the steps, run `just check` and `nix flake check` (`nix flake check path:nix/workspace` for a
+   [flake in a subdirectory](#a-workspace-whose-content-must-not-enter-the-nix-store)), then commit the flake's
+   `flake.nix` and `flake.lock`, `.scions/`, and the workspace changes together.
 
 Never edit `.scions/`; it is replaced on every graft.
 
