@@ -170,8 +170,10 @@ What changes:
 - An upgrade commits `nix/workspace/flake.nix`, `nix/workspace/flake.lock`, and `.scions/` together.
 
 To check the layout, put a random string in a tracked note, run the operations you use (`just`, `just check`,
-direnv), and search the store paths created since for it: `find /nix/store -maxdepth 1 -newer STAMP` then
-`grep -rlF`. A control run of `nix flake metadata "git+file://$PWD?dir=nix/workspace"` finds it.
+direnv), and search the store paths created since for it:
+`find /nix/store -mindepth 1 -maxdepth 1 -cnewer STAMP ! -name .links -print0 | xargs -0 grep -rlsF STRING`.
+Use `-cnewer`: Nix sets every store path's modification time to 1970, so `-newer` finds nothing. A control run,
+`nix flake metadata "git+file://$PWD?dir=nix/workspace"` in a scratch copy, finds the copy's string.
 
 ## Local overlay
 
