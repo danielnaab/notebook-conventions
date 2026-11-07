@@ -109,7 +109,13 @@ A workspace whose content must not be copied into the Nix store has no flake at 
 subdirectory and the `justfile` names it
 ([content kept out of the Nix store](#a-workspace-whose-content-must-not-enter-the-nix-store)). The flake also
 outputs `packages.<system>.tools`, one `bin/` with every kit tool, `just`, and `markdownlint-cli2`, for putting
-them on `PATH` (then `kit_run := "{}"`).
+them on `PATH` (then `kit_run := "{}"`). Tools the workspace's own agents need join them through the
+`nix/workspace.nix` argument `extraPackages = pkgs: [ pkgs.jq ];`, which also reaches the dev shell, so one flake
+builds every tool:
+
+```sh
+nix build --out-link .local/tools path:nix/workspace#tools   # .local/tools/bin/, ignored by the seed
+```
 
 ## A workspace whose content must not enter the Nix store
 

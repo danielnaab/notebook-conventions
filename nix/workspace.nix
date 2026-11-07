@@ -8,6 +8,8 @@
 # Outputs: a dev shell; an app per kit tool (nix run .#check-kb); the task check; and packages.tools, one
 # directory whose bin/ holds every kit tool plus just and markdownlint-cli2.
 #
+# extraPackages: pkgs -> [ packages ] the workspace adds to the tools package (and so to the dev shell).
+#
 # flakeDir: where the workspace's flake.nix sits under its top, as given to graft's mkFlake (default `.`). A flake
 # in a subdirectory (`nix/workspace`) keeps the workspace's content out of the Nix store, so its source holds no
 # notes: there is no task check (`just check` runs check-tasks on the working tree instead).
@@ -56,13 +58,13 @@ let
 
   toolsPackage = pkgs: pkgs.symlinkJoin {
     name = "notebook-tools";
-    paths = lib.attrValues (scripts pkgs) ++ [ pkgs.just pkgs.markdownlint-cli2 ];
-    meta.description = "Every kit tool, just, and markdownlint-cli2 in one bin/";
+    paths = lib.attrValues (scripts pkgs) ++ [ pkgs.just pkgs.markdownlint-cli2 ] ++ extraPackages pkgs;
+    meta.description = "Every kit tool, just, markdownlint-cli2, and the workspace's extraPackages in one bin/";
   };
 in {
   devShells = forAll (pkgs: {
     default = pkgs.mkShell {
-      packages = [ pkgs.git pkgs.ripgrep (python pkgs) (toolsPackage pkgs) ] ++ extraPackages pkgs;
+      packages = [ pkgs.git pkgs.ripgrep (python pkgs) (toolsPackage pkgs) ];
     };
   });
 

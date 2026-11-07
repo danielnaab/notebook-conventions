@@ -37,6 +37,8 @@ and recipes pass flags through without Nix's `--`. Released as v0.3.0.
   `PATH`.
 - "Run the tools without the root flake" no longer suggests a second tools flake: one flake in a subdirectory
   serves graft and the tools.
+- `nix/workspace.nix`'s `extraPackages` go into the `tools` package as well as the dev shell, so a workspace's
+  own tools come from the same flake.
 - Docs, skills, the seed, and tool messages name `just` recipes (`just index`, `just move OLD NEW`,
   `just check`) instead of `nix run .#…` forms, which still work underneath.
 - Seed `knowledge-base.yaml`: `justfile` is ask-first.
