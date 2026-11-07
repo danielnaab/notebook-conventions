@@ -20,8 +20,8 @@ The seven core policies bind. Application is the kit's default
 - **Deliberate deviations:** the kit's two (task status vocabulary, `YYYY-MM` folders).
   Add local deviations here with a reason.
 - **Added locally:** [boundaries](boundaries.md) and anything under Local rules.
-- **Verification:** `nix run .#check-kb` (links, status, provenance, OKF conformance), `nix run .#check-tasks`, and
-  `nix run .#index -- --check`; the pre-commit hook runs the first.
+- **Verification:** `just check`: check-kb (links, status, provenance, OKF conformance), check-tasks,
+  `index --check`, and check-obsidian; the pre-commit hook runs check-kb.
   Write boundaries and `askFirst` approvals are checked by hand.
 - **Ask-first changes** need <<OWNER>>'s approval for the specific change, recorded in the task, session, daily
   note, or commit message.

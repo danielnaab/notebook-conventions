@@ -1,7 +1,7 @@
 """Read-only validation of task records and their current-work index. No scheduling/actions.
 
 The tasks folder is `notebook/tasks` unless knowledge-base.yaml sets `rules.checks.tasks.path`. Its index.md is
-generated (`nix run .#index`); this check fails when it is missing or stale.
+generated (`just index`); this check fails when it is missing or stale.
 """
 from __future__ import annotations
 
@@ -217,9 +217,9 @@ def validate(root: Path) -> list[str]:
     index = folder / vault.INDEX
     index_rel = index.relative_to(root).as_posix()
     if not index.is_file() or not safe(index):
-        return errors + [f"{index_rel}: missing index or symlink (run nix run .#index)"]
+        return errors + [f"{index_rel}: missing index or symlink (run just index)"]
     if index.read_text() != vault.task_index(folder):
-        error(index_rel, "index is stale: run nix run .#index")
+        error(index_rel, "index is stale: run just index")
     return errors
 
 

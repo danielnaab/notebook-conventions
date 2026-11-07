@@ -44,7 +44,7 @@ def main() -> int:
     parser.add_argument("--src", default=os.environ.get("KBI_SRC"), help="knowledge-base-integrity src/")
     args = parser.parse_args()
     if not args.src:
-        print("check-kb: set KBI_SRC or pass --src (use `nix run .#check-kb`)", file=sys.stderr)
+        print("check-kb: set KBI_SRC or pass --src (run it with `just check-kb`)", file=sys.stderr)
         return 2
 
     status = 0

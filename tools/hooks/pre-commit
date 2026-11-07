@@ -1,6 +1,6 @@
 #!/bin/sh
 # Block commits whose staged Markdown breaks the heading-spacing rule the vault's Obsidian Linter
-# enforces, or that break links, lifecycle status, or Sources sections (nix run .#check-kb).
+# enforces, or that break links, lifecycle status, or Sources sections (just check-kb).
 # Fix formatting with: markdownlint-cli2 --fix <files>
 # Run it through the workspace's .githooks/pre-commit wrapper (graft drops the executable bit in .scions/).
 # Enable once per clone: git config core.hooksPath .githooks
@@ -21,5 +21,10 @@ else
   nix develop --command markdownlint-cli2 --no-globs "$@"
 fi
 
-# Whole-repository integrity check: links and Sources can break in files that were not staged.
-nix run .#check-kb
+# Whole-repository integrity check: links and Sources can break in files that were not staged. Through the
+# workspace's justfile when there is one, so its kit_run override decides how the tool runs.
+if [ -f justfile ] && command -v just >/dev/null 2>&1; then
+  just check-kb
+else
+  nix run .#check-kb
+fi

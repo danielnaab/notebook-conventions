@@ -55,8 +55,8 @@ sources:
       note: "Sources as captured; never edited after capture."
 
 rules:
-  # Scopes for knowledge-base-integrity (nix run .#check-kb). Records and raw sources carry no status;
-  # task records are checked by nix run .#check-tasks; .scions/ is graft output.
+  # Scopes for knowledge-base-integrity (just check-kb). Records and raw sources carry no status;
+  # task records are checked by just check-tasks; .scions/ is graft output.
   checks:
     okf:
       bundle: notebook
@@ -78,4 +78,4 @@ rules:
     # Create new files; after a record's own date, change it only to add a dated correction. Raw sources never change.
     writeOnce: [notebook/records/**, notebook/raw/**]
     deny: [secrets/**, credentials/**, .env, .env.*, "**/*.key", "**/*.pem", "**/*.p12", "**/*.pfx", .scions/**, .git/**, .direnv/**]
-    askFirst: [AGENTS.md, CLAUDE.md, knowledge-base.yaml, flake.nix, flake.lock, .envrc, .gitignore, .gitattributes, notebook/.obsidian/**, notebook/.okfignore, .pi/**, docs/**, notebook/templates/**, scripts/**, tests/**, .githooks/**, .markdownlint-cli2.jsonc]
+    askFirst: [AGENTS.md, CLAUDE.md, knowledge-base.yaml, flake.nix, flake.lock, .envrc, .gitignore, .gitattributes, notebook/.obsidian/**, notebook/.okfignore, .pi/**, docs/**, notebook/templates/**, scripts/**, tests/**, .githooks/**, .markdownlint-cli2.jsonc, justfile]

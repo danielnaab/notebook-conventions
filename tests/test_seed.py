@@ -155,5 +155,112 @@ class SeedTest(unittest.TestCase):
         self.assertTrue(target.is_dir())
 
 
+JUST = shutil.which("just")
+KIT_RECIPES = {
+    "check": ["check", "check-kb", "check-tasks", "check-templates", "check-obsidian"],
+    "notes": ["index", "move"],
+    "deps": ["outdated", "changelog", "upgrade", "migrate", "sync"],
+    "migrations": ["convert", "upgrade-obsidian"],
+}
+
+
+@unittest.skipUnless(JUST, "just not on PATH")
+class JustMenuTest(unittest.TestCase):
+    """The seeded justfile imports the kit's menu from the scion; recipes pass arguments through intact."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        build_workspace(self.root)
+        # Stub tools record one line per call: their name and arguments, separated by \x1f, so quoting is exact.
+        self.stubs = self.root / ".stubs"
+        self.stubs.mkdir()
+        self.log = self.root / ".calls"
+        for name in ("check-kb", "check-tasks", "check-templates", "check-obsidian", "index", "move", "convert",
+                     "upgrade-obsidian", "graft"):
+            stub = self.stubs / name
+            stub.write_text(f'#!/bin/sh\n{{ printf {name}; for a; do printf "\\037%s" "$a"; done; echo; }} >> "{self.log}"\n')
+            stub.chmod(0o755)
+        self.env = {**os.environ, "KIT_RUN": f"{self.stubs}/{{}}", "GRAFT_RUN": str(self.stubs / "graft")}
+
+    def just(self, *args, cwd=None, env=None):
+        return subprocess.run([JUST, *args], capture_output=True, text=True, cwd=cwd or self.root,
+                              env=env or self.env)
+
+    def calls(self):
+        if not self.log.exists():
+            return []
+        return [line.split("\x1f") for line in self.log.read_text().splitlines()]
+
+    def test_no_arguments_lists_the_grouped_menu(self):
+        proc = self.just()
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        for group, recipes in KIT_RECIPES.items():
+            self.assertIn(f"[{group}]", proc.stdout)
+            for recipe in recipes:
+                line = re.search(rf"(?m)^\s+{re.escape(recipe)}\b.*# (.+)$", proc.stdout)
+                self.assertIsNotNone(line, f"{recipe} is listed with a description")
+        self.assertNotRegex(proc.stdout, r"(?m)^\s+(check-local|default)\b", "private recipes stay unlisted")
+        # just finds the workspace justfile from inside the vault
+        self.assertEqual(proc.stdout, self.just(cwd=self.root / "notebook").stdout)
+
+    def test_every_recipe_resolves(self):
+        for recipes in KIT_RECIPES.values():
+            for recipe in recipes:
+                proc = self.just("--show", recipe)
+                self.assertEqual(0, proc.returncode, proc.stderr)
+
+    def test_default_runs_tools_and_graft_through_the_root_flake(self):
+        env = {k: v for k, v in os.environ.items() if k not in ("KIT_RUN", "GRAFT_RUN")}
+        proc = self.just("--dry-run", "check-kb", "--root", ".", env=env)
+        self.assertIn('nix run .#check-kb -- "$@"', proc.stderr)
+        proc = self.just("--dry-run", "upgrade", "x@v1", env=env)
+        self.assertIn('nix run .#graft -- upgrade "$@"', proc.stderr)
+
+    def test_check_runs_every_kit_check(self):
+        proc = self.just("check")
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertEqual([["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"]], self.calls())
+
+    def test_arguments_pass_through_intact(self):
+        proc = self.just("move", "notebook/a b.md", "notebook/c.md", "--dry-run", cwd=self.root / "notebook")
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.just("index", "--check")
+        self.just("changelog", "notebook-conventions")
+        self.assertEqual([["move", "notebook/a b.md", "notebook/c.md", "--dry-run"], ["index", "--check"],
+                          ["graft", "changelog", "notebook-conventions"]], self.calls())
+
+    def test_sync_runs_graft_bare_and_upgrade_lists_next_steps(self):
+        self.just("sync")
+        proc = self.just("upgrade", "notebook-conventions@v9.9.9")
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertEqual([["graft"], ["graft", "upgrade", "notebook-conventions@v9.9.9"]], self.calls())
+        for step in ("just changelog", "just migrate", "just check", "Commit"):
+            self.assertIn(step, proc.stdout)
+
+    def test_workspace_overrides_how_tools_run_and_extends_check(self):
+        env = {k: v for k, v in os.environ.items() if k not in ("KIT_RUN", "GRAFT_RUN")}
+        with (self.root / "justfile").open("a") as justfile:
+            justfile.write(f'\nkit_run := "{self.stubs}/{{}}"\ngraft_run := "{self.stubs}/graft"\n'
+                           f'\ncheck-local:\n    @echo local >> "{self.log}"\n')
+        proc = self.just("check", env=env)
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertEqual([["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"], ["local"]],
+                         self.calls())
+        self.just("outdated", env=env)
+        self.assertEqual(["graft", "outdated"], self.calls()[-1])
+
+    def test_check_passes_with_the_real_tools(self):
+        kbi = os.environ.get("KBI_SRC")
+        if not kbi:
+            self.skipTest("KBI_SRC not set")
+        tools = self.root / ".scions/notebook-conventions/tools"
+        env = {**os.environ, "KIT_RUN": f"{sys.executable} {tools}/{{}}.py", "PYTHONDONTWRITEBYTECODE": "1"}
+        proc = self.just("check", env=env)
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("all checks passed", proc.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

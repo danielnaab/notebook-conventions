@@ -7,7 +7,7 @@ had), the seed in the current scion, and the vault's copy. A kit change applies 
 value; where the workspace changed the same setting, its value is kept and reported. Files the vault lacks are
 created. It also adds the seed's `.gitignore` exceptions for plugin settings.
 
-Run it from the workspace root on the upgrade branch, after `nix run .#graft upgrade`, with Obsidian closed:
+Run it from the workspace root on the upgrade branch, after `just upgrade`, with Obsidian closed:
 Obsidian rewrites its settings files while it runs. `--base` defaults to HEAD, which still holds the old scion
 until the upgrade is committed; after that, name the commit before it. Without a base seed, the kit's entries are
 added and existing values kept. Running it again changes nothing. It does not install plugins.

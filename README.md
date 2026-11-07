@@ -15,8 +15,8 @@ place, and copies a small `seed/` once.
 | [docs/](docs/README.md) | The conventions: layout, workflow, tasks, conformance, Obsidian, adoption; pinned Obsidian plugins. |
 | [templates/](templates/) | Canonical daily, session, wiki, and task-record note templates. |
 | [skills/](skills/) | Generic agent skills `notebook-start` and `notebook-wrap`. |
-| [tools/](tools/) | `check-tasks`, `check-kb`, `check-templates`, `check-obsidian`, `upgrade-obsidian`, `index`, `move`, `convert`, and a pre-commit hook. |
-| [nix/workspace.nix](nix/workspace.nix) | Flake wiring: dev shell, check apps, task check. |
+| [tools/](tools/) | `check-tasks`, `check-kb`, `check-templates`, `check-obsidian`, `upgrade-obsidian`, `index`, `move`, `convert`, a pre-commit hook, and the `just` menu `kit.just`. |
+| [nix/workspace.nix](nix/workspace.nix) | Flake wiring: dev shell, tool apps, a `tools` package, task check. |
 | [seed/](seed/common/) | Files a workspace copies once and then owns. |
 | [LICENSE](LICENSE) | CC0 1.0 Universal. |
 | [tests/](tests/) | Tool tests and a test that builds a workspace from the seed and runs every check. |
@@ -24,8 +24,9 @@ place, and copies a small `seed/` once.
 ## Use it
 
 See the [adoption guide](docs/adoption.md): copy the seed, fill the placeholders, write the boundaries, graft the
-kit, and check. Upgrade with `nix run .#graft upgrade`, read the changelog's **Upgrading** steps, and let
-`nix run .#graft migrate` brief an agent.
+kit, and check. In a workspace, `just` lists every operation, grouped: checks, note moves and indexes, and
+dependency upgrades ([run operations with just](docs/adoption.md#run-operations-with-just)). Upgrade with
+`just upgrade`, read the changelog's **Upgrading** steps, and let `just migrate` brief an agent.
 
 ## Principles
 

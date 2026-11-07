@@ -31,7 +31,8 @@ Markdown in Obsidian.
   every note has a `type`; links are relative Markdown links that stay inside `notebook/`.
 - Task records in `notebook/tasks/` own current state; session records in `notebook/records/sessions/` own reasoning;
   wiki pages own durable synthesis. Follow the kit's [task workflow](.scions/notebook-conventions/docs/tasks.md).
-- Move notes with `nix run .#move -- OLD NEW`; regenerate folder indexes with `nix run .#index`.
+- Run `just` to list operations (checks, note moves and indexes, dependency upgrades); flags pass straight
+  through. Move notes with `just move OLD NEW`; regenerate folder indexes with `just index`.
 - Skills `notebook-start` and `notebook-wrap` come from the kit (see `.pi/settings.json`).
 - Maintain durable synthesis in `notebook/wiki/` with lifecycle frontmatter and provenance (`sources` frontmatter
   or `## Sources`).
@@ -45,4 +46,4 @@ Markdown in Obsidian.
 - Never edit `.scions/`; it is graft output. Upgrade through graft (see the kit's
   [adoption guide](.scions/notebook-conventions/docs/adoption.md)).
 - No publication, pushes, external messages, deployments, or destructive cleanup without explicit authorization.
-- Verify with `nix run .#check-kb` (links, status, Sources) and `nix run .#check-tasks` (task records).
+- Verify with `just check` (links, status, Sources, task records, indexes, Obsidian settings).

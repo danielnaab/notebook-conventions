@@ -24,7 +24,7 @@
       kitChecks = {
         checks = forAll (pkgs: {
           tests = pkgs.runCommand "kit-tests" {
-            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) pkgs.git ];
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) pkgs.git pkgs.just ];
             KBI_SRC = "${inputs.knowledge-base-integrity}/src";
             PYTHONDONTWRITEBYTECODE = "1";
           } ''

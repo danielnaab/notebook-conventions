@@ -22,4 +22,4 @@ _Nothing yet._
 
 The shared conventions live in [notebook-conventions](.scions/notebook-conventions/docs/README.md), a pinned graft
 dependency. Daily → session → wiki is the browsing path, but a session is not mandatory for every interaction.
-Folder `index.md` files are generated: `nix run .#index`.
+Folder `index.md` files are generated: `just index`. Run `just` to list every operation.

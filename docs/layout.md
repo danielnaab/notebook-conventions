@@ -56,7 +56,7 @@ Every note in the bundle is OKF frontmatter plus a Markdown body.
   fail; a link whose note exists under the same name elsewhere fails as misdirected.
 - Links out of the vault (workspace docs, the kit) are absolute URLs or backticked paths, since the vault is
   opened on its own.
-- Move notes with `nix run .#move -- OLD NEW`: it rewrites every relative link to and from them. Obsidian does
+- Move notes with `just move OLD NEW`: it rewrites every relative link to and from them. Obsidian does
   the same for renames made inside Obsidian.
 - Backticks are for literal paths, patterns, and code, not for navigation.
 
@@ -64,7 +64,7 @@ Every note in the bundle is OKF frontmatter plus a Markdown body.
 
 - Folders use OKF `index.md` listings: headed sections of `* [Title](path) - description`, no frontmatter. The
   vault root's `index.md` declares `okf_version`. `README.md` has no special meaning inside the vault.
-- `nix run .#index` generates them from note frontmatter (`title`, else the first `#` heading, and
+- `just index` generates them from note frontmatter (`title`, else the first `#` heading, and
   `description`); `--check` reports stale ones. `tasks/index.md` lists active tasks by status, and the task
   check fails when it is stale.
 

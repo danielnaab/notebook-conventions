@@ -177,7 +177,7 @@ class Converter:
             if any(p.startswith(".") for p in Path(rel).parts) or b.is_ignored(rel) or folder.startswith("tasks/"):
                 continue  # folder-shaped tasks keep README.md; templates/ is outside the bundle
             self.manual.append(
-                f"{rel} is a note named README.md: give it a `type`, or move it to `{folder}.md` with `nix run .#move`"
+                f"{rel} is a note named README.md: give it a `type`, or move it to `{folder}.md` with `just move`"
             )
 
     def add_types(self) -> None:

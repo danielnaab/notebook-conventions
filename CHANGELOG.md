@@ -1,5 +1,62 @@
 # Changelog
 
+## Unreleased
+
+A `just` operations menu, read in place from the scion: `just` lists every operation a workspace has, grouped,
+and recipes pass flags through without Nix's `--`. Released as v0.3.0.
+
+### Added
+
+- `tools/kit.just`, imported by the workspace's `justfile`. Groups: `check` (`check`, `check-kb`, `check-tasks`,
+  `check-templates`, `check-obsidian`), `notes` (`index`, `move`), `deps` (`outdated`, `changelog`, `upgrade`,
+  `migrate`, `sync`), and `migrations` (`upgrade-obsidian`, `convert`). `just check` runs check-kb, check-tasks,
+  `index --check`, and check-obsidian, then the workspace's `check-local`. `just upgrade` prints the next steps.
+  `just changelog` needs a graft that has the `changelog` command.
+- Two variables decide how recipes run tools: `kit_run` (default `nix run .#{} --`, `{}` is the tool) and
+  `graft_run` (default `nix run .#graft --`). A workspace sets them in its `justfile`, or per shell with `KIT_RUN`
+  and `GRAFT_RUN` ([override how tools run](docs/adoption.md#override-how-tools-run)).
+- `packages.<system>.tools` in `nix/workspace.nix`: every kit tool, `just`, and `markdownlint-cli2` in one
+  `bin/`, for workspaces that run the tools without evaluating their own flake
+  ([run the tools without the root flake](docs/adoption.md#run-the-tools-without-the-root-flake)).
+- Seed: `justfile`, which imports the menu, lists it as the default recipe, and shows where overrides and local
+  recipes go.
+
+### Changed
+
+- The dev shell has `just` and the kit's tools on `PATH` (the `tools` package).
+- The pre-commit hook runs `just check-kb` when the workspace has a `justfile` and `just` is on `PATH`, so it
+  follows the workspace's `kit_run`; otherwise `nix run .#check-kb` as before.
+- Docs, skills, the seed, and tool messages name `just` recipes (`just index`, `just move OLD NEW`,
+  `just check`) instead of `nix run .#…` forms, which still work underneath.
+- Seed `knowledge-base.yaml`: `justfile` is ask-first.
+
+### Upgrading
+
+From v0.2.2. Work on a branch with a clean tree.
+
+1. `nix run .#graft upgrade notebook-conventions@v0.3.0` (the last time in this form).
+2. Copy the seed's justfile: `cp -n .scions/notebook-conventions/seed/common/justfile justfile` and
+   `git add justfile`. If the workspace already has a `justfile`, add the seed's two `set` lines, its `import`,
+   and its `default` recipe at the top instead, and rename any local recipe whose name collides with a kit
+   recipe unless it is meant to replace it.
+3. Get `just`: with direnv, reload the dev shell (`direnv reload`), which now has it; otherwise install it, or use
+   `nix shell nixpkgs#just`.
+4. If the workspace does not run the tools through its root flake, set `kit_run` (and `graft_run` if graft runs
+   another way) in the `justfile`, below the import. A hand-kept bin directory of kit tools can be replaced by
+   the `tools` package from a flake that imports the kit's wiring.
+5. If the workspace has its own checks (scripts, a lint step), define `check-local` in the `justfile` to run them
+   from `just check`.
+6. Replace `nix run .#` forms in the workspace's own files (not `.scions/`):
+   `grep -rn 'nix run \.#' --exclude-dir=.scions --exclude-dir=.git .`. `nix run .#TOOL -- ARGS` becomes
+   `just TOOL ARGS`; `nix run .#graft outdated|upgrade|migrate` becomes `just outdated|upgrade|migrate`;
+   `nix run .#graft` becomes `just sync`. In `AGENTS.md`, compare with the seed's, which says to run `just` to list
+   operations and to verify with `just check`. Keep the first `nix run .#graft` in bootstrap instructions: the
+   menu lives in `.scions/`.
+7. In `knowledge-base.yaml` (ask first), add `justfile` to `rules.writes.askFirst`.
+
+Done when `just` lists the `check`, `deps`, `migrations`, and `notes` groups, `just check` passes, and a commit
+that stages Markdown runs the hook.
+
 ## v0.2.2 - 2026-11-07
 
 ### Added

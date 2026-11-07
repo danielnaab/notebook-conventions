@@ -1,0 +1,22 @@
+# Operations for this workspace. Run `just` to list them; `just <recipe> --flag` passes flags through.
+# The kit's recipes (check, index, move, upgrade, ...) are read in place from the pinned scion.
+
+# Let the definitions below override the kit's variables and recipes.
+set allow-duplicate-variables
+set allow-duplicate-recipes
+
+import ".scions/notebook-conventions/tools/kit.just"
+
+# `just` with no recipe runs the first one in this file: list the operations.
+[private]
+default:
+    @{{just_executable()}} --justfile {{quote(justfile())}} --list
+
+# How kit tools and graft run (default: `nix run .#<tool> --` and `nix run .#graft --`). For example, with the
+# kit's tools package on PATH (it includes just and markdownlint-cli2), run them directly:
+# kit_run := "{}"
+
+# Add workspace checks to `just check` here:
+# check-local:
+
+# Local recipes go below. A comment line above a recipe is its description in `just`; [group('...')] files it.

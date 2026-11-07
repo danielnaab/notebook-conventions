@@ -56,7 +56,7 @@ The outcome is verified within authorization.
         return path
 
     def index(self):
-        """Regenerate the index, as nix run .#index does."""
+        """Regenerate the index, as just index does."""
         folder = self.root / checker.tasks_path(self.root)
         if folder.is_dir():
             (folder / "index.md").write_text(checker.vault.task_index(folder))

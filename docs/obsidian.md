@@ -74,14 +74,14 @@ the daily note either way, through `openBehavior`.
 
 ## Keeping settings in sync
 
-The settings are seeded, so a workspace owns its copy. `nix run .#check-obsidian` compares each seeded file with
+The settings are seeded, so a workspace owns its copy. `just check-obsidian` compares each seeded file with
 the vault's copy. It compares JSON, not text, because Obsidian rewrites formatting. It lists each file as same,
 changed (and which keys or list items differ), or missing. It also shows each pinned plugin's installed version
 and whether its `main.js` matches the pinned release. A changed file is a local choice, not an error; `--strict`
 exits 1 on changed or missing files.
 
-`nix run .#upgrade-obsidian` applies a kit release's setting changes. Run it on the upgrade branch after
-`nix run .#graft upgrade`, with Obsidian closed, because Obsidian rewrites its settings while it runs. For each
+`just upgrade-obsidian` applies a kit release's setting changes. Run it on the upgrade branch after
+`just upgrade`, with Obsidian closed, because Obsidian rewrites its settings while it runs. For each
 seeded file it merges three versions: the seed in the scion at `--base` (default `HEAD`, which still holds the
 old scion until the upgrade is committed), the current seed, and the vault's copy.
 
@@ -124,7 +124,7 @@ markdownlint-cli2 --fix FILE...  # fix in place; output matches the Obsidian Lin
 ## Pre-commit hook
 
 [`tools/hooks/pre-commit`](../tools/hooks/pre-commit) runs the lint check on staged `.md` files and
-`nix run .#check-kb` over the repository, and blocks the commit on violations. Git cannot run it from
+`just check-kb` over the repository, and blocks the commit on violations. Git cannot run it from
 `.scions/`, because graft does not keep the executable bit there. The seed therefore has an executable wrapper,
 `.githooks/pre-commit`, that runs it with `sh`. Enable the wrapper once per clone:
 
@@ -132,7 +132,8 @@ markdownlint-cli2 --fix FILE...  # fix in place; output matches the Obsidian Lin
 git config core.hooksPath .githooks
 ```
 
-It falls back to `nix develop` when `markdownlint-cli2` is not on `PATH`.
+It falls back to `nix develop` when `markdownlint-cli2` is not on `PATH`, and to `nix run .#check-kb` when the
+workspace has no `justfile` or `just` is not on `PATH`.
 
 ## Sources
 

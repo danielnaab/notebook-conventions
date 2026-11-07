@@ -34,7 +34,7 @@ def main() -> int:
         print(f"{verb}: {rel}")
     print(f"Indexes: {len(stale)} {verb}.")
     if args.check and stale:
-        print("Run `nix run .#index` to regenerate them.", file=sys.stderr)
+        print("Run `just index` to regenerate them.", file=sys.stderr)
         return 1
     return 0
 

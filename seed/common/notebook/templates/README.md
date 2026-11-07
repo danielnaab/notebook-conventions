@@ -1,7 +1,7 @@
 # Templates
 
 These files are shared by Obsidian's core Templates and Daily notes plugins and by agents. They are copied from the
-pinned kit; `nix run .#check-templates` reports how they differ from its canonical copies.
+pinned kit; `just check-templates` reports how they differ from its canonical copies.
 
 - [Daily note](daily.md): chronological activity and links to active sessions.
 - [Session index](session.md): goal, artifacts, outcomes, checks, and next actions.

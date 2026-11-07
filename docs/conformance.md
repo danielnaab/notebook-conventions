@@ -39,14 +39,14 @@ Records without `status` are no longer a deviation: meta-KB v1.1.0 adds the raw-
 
 ## Verification
 
-- `nix run .#check-kb` runs [knowledge-base-integrity](https://github.com/danielnaab/knowledge-base-integrity)
+- `just check-kb` runs [knowledge-base-integrity](https://github.com/danielnaab/knowledge-base-integrity)
   over the scopes in `rules.checks`: links and heading anchors, lifecycle `status`, provenance, and OKF
   conformance of the vault (`type` on every note, index shapes, link classes). Links to notes not written yet
   are counted, not failed.
-- `nix run .#index -- --check` reports stale folder indexes.
-- `nix run .#check-tasks` validates task records and the index.
-- `nix run .#check-templates` reports drift between a workspace's templates and the kit's canonical copies.
-- `nix run .#check-obsidian` reports drift between the vault's shared Obsidian settings and the kit's seed.
+- `just index --check` reports stale folder indexes.
+- `just check-tasks` validates task records and the index.
+- `just check-templates` reports drift between a workspace's templates and the kit's canonical copies.
+- `just check-obsidian` reports drift between the vault's shared Obsidian settings and the kit's seed.
 - Write boundaries and `askFirst` approvals are not machine-checked. Verify them in Plan → Patch → Verify.
 
 ## Sources

@@ -93,7 +93,7 @@ A user-initiated information request can merit a compact daily record even when 
 - Log outcomes, decisions and rationale, evidence, blockers and owners, and next actions. For delegated work
   record the repo, handle, session, ownership, completion condition, and disposition.
 - At a checkpoint update only the applicable records: affected tasks, wiki pages, a concise daily entry, and the
-  session record if one exists, then regenerate indexes with `nix run .#index`. Verify evidence before closing a
+  session record if one exists, then regenerate indexes with `just index`. Verify evidence before closing a
   task. Agent-written notes record `generated`; a person's review adds `verified` ([layout](layout.md#notes)).
 - Workers return note-ready summaries; the orchestrating agent is the single writer of shared indexes.
 
