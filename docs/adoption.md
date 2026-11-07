@@ -213,7 +213,7 @@ While the kit is `0.x`, any release may change seeded files, so every release ca
 ## Sources
 
 - [Graft README: a flake in a subdirectory](https://github.com/danielnaab/graft/blob/v2.7.0/README.md#a-flake-in-a-subdirectory)
-- [Graft README: upgrades and migrations](https://github.com/danielnaab/graft/blob/v2.6.0/README.md#breaking-changes-and-migrations)
+- [Graft README: upgrades and migrations](https://github.com/danielnaab/graft/blob/v2.7.0/README.md#breaking-changes-and-migrations)
 - [Meta-KB dependency playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/manage-kb-dependencies.md)
 - [Seed files](../seed/common/)
 - [just manual: imports, settings, and attributes](https://just.systems/man/en/)

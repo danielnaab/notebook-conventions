@@ -1,9 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.3.0 - 2026-11-07
 
 A `just` operations menu, read in place from the scion: `just` lists every operation a workspace has, grouped,
-and recipes pass flags through without Nix's `--`. Released as v0.3.0.
+and recipes pass flags through without Nix's `--`.
 
 ### Added
 

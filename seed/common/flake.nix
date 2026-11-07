@@ -2,14 +2,14 @@
   description = "<<WORKSPACE_NAME>> work-memory workspace";
 
   inputs = {
-    graft.url = "github:danielnaab/graft/v2.6.0";
+    graft.url = "github:danielnaab/graft/v2.7.0";
     nixpkgs.follows = "graft/nixpkgs";
     meta-knowledge-base = {
       url = "github:danielnaab/meta-knowledge-base/v1.1.0";
       flake = false;
     };
     notebook-conventions = {
-      url = "github:danielnaab/notebook-conventions/v0.2.2";
+      url = "github:danielnaab/notebook-conventions/v0.3.0";
       flake = false;
     };
     knowledge-base-integrity = {

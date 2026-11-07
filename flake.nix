@@ -2,7 +2,7 @@
   description = "Conventions, tools, and a starter seed for Markdown work-memory workspaces";
 
   inputs = {
-    graft.url = "github:danielnaab/graft/v2.6.0";
+    graft.url = "github:danielnaab/graft/v2.7.0";
     nixpkgs.follows = "graft/nixpkgs";
     meta-knowledge-base = {
       url = "github:danielnaab/meta-knowledge-base/v1.1.0";
