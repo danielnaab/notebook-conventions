@@ -41,6 +41,9 @@ in {
       check-obsidian = app pkgs "check-obsidian" ''
         exec python ${kit}/tools/check-obsidian.py "$@"
       '' "Report how the vault's shared Obsidian settings and plugins differ from the kit's";
+      upgrade-obsidian = app pkgs "upgrade-obsidian" ''
+        exec python ${kit}/tools/upgrade-obsidian.py "$@"
+      '' "Merge the kit's seeded Obsidian settings into the vault, keeping local changes (Obsidian closed)";
       index = app pkgs "index" ''
         export KBI_SRC=${kbiSrc}
         exec python ${kit}/tools/index.py "$@"

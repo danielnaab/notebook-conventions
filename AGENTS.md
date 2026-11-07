@@ -14,7 +14,9 @@ pin it as a graft scion. Read [README.md](README.md), then [KB configuration](kn
   workspace must own and edit; every seeded file is a future migration.
 - **Every release is a migration.** Update [CHANGELOG.md](CHANGELOG.md) with a `## vX.Y.Z` section and an
   **Upgrading** subsection written as steps an agent who knows only the workspace can apply: what moved, what to
-  search for, what to replace, how to tell it is done. Tag releases; stay `0.x` until two workspaces run it stably.
+  search for, what to replace, how to tell it is done. A change to seeded Obsidian settings is applied with
+  `nix run .#upgrade-obsidian`, so test it against the previous seed. Tag releases; stay `0.x` until two workspaces
+  run it stably.
 - **Docs follow the meta-KB:** `status` frontmatter, `## Sources`, real relative links. Keep policy-style text short.
 - **Verify:** `nix flake check` runs the tests (tool tests, a workspace built from `seed/`, and the hygiene scan);
   `nix run .#check-kb` checks links, status, and Sources here. Tests need no network.

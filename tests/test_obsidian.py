@@ -14,6 +14,9 @@ KIT = Path(__file__).resolve().parents[1]
 SEEDED = KIT / "seed/common/notebook/.obsidian"
 PINS = json.loads((KIT / "docs/obsidian-plugins.json").read_text())["plugins"]
 PINNED = {pin["id"]: pin for pin in PINS}
+sys.path.insert(0, str(KIT / "tools"))
+
+import obsidian_settings as obs  # noqa: E402
 
 spec = importlib.util.spec_from_file_location("check_obsidian", KIT / "tools/check-obsidian.py")
 check_obsidian = importlib.util.module_from_spec(spec)
@@ -125,6 +128,137 @@ class CheckObsidianTest(unittest.TestCase):
         pins.write_text(json.dumps({"plugins": [{**pin, "assets": {"main.js": hashlib.sha256(body).hexdigest()}}]}))
         self.assertEqual([(pin["id"], f"installed {pin['version']}, matches the pinned release")],
                          check_obsidian.plugin_states(self.root, pins))
+
+
+class MergeTest(unittest.TestCase):
+    def test_kit_change_applies_where_the_workspace_kept_the_old_value(self):
+        merged, applied, kept = obs.merge({"a": 1, "b": 1}, {"a": 2, "b": 2}, {"a": 1, "b": 5})
+        self.assertEqual({"a": 2, "b": 5}, merged)
+        self.assertEqual(["a"], applied)
+        self.assertEqual(["b"], kept)
+
+    def test_keys_added_and_removed_by_the_kit(self):
+        merged, _, _ = obs.merge({"gone": 1, "x": 0}, {"x": 0, "new": 2}, {"gone": 1, "x": 0, "mine": 3})
+        self.assertEqual({"x": 0, "mine": 3, "new": 2}, merged)
+
+    def test_lists_merge_as_sets_in_local_order(self):
+        merged, applied, _ = obs.merge(["a", "b"], ["a", "c"], ["b", "a", "local"])
+        self.assertEqual(["a", "local", "c"], merged)
+        self.assertEqual(["(file) +c", "(file) -b"], applied)
+
+    def test_no_old_seed_adds_kit_entries_and_keeps_local_values(self):
+        merged, applied, kept = obs.merge(obs.MISSING, {"k1": [1], "k2": [2]}, {"k1": [9], "mine": []})
+        self.assertEqual({"k1": [9], "mine": [], "k2": [2]}, merged)
+        self.assertEqual(["k2"], applied)
+        self.assertEqual(["k1"], kept)
+
+    def test_nested_objects_merge_by_path(self):
+        old = {"rules": {"r1": {"enabled": False}, "r2": {"enabled": False}}}
+        new = {"rules": {"r1": {"enabled": True}, "r2": {"enabled": True}}}
+        local = {"rules": {"r1": {"enabled": False}, "r2": {"enabled": "custom"}}}
+        merged, applied, kept = obs.merge(old, new, local)
+        self.assertEqual({"r1": {"enabled": True}, "r2": {"enabled": "custom"}}, merged["rules"])
+        self.assertEqual(["rules.r1.enabled"], applied)
+        self.assertEqual(["rules.r2.enabled"], kept)
+
+
+def git(root, *args):
+    subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True)
+
+
+class UpgradeObsidianTest(unittest.TestCase):
+    """Replays a real upgrade, v0.2.0 to v0.2.1: the old seed lacked the shortcuts, two plugins, and the layout."""
+
+    V020_PLUGINS = ["calendar", "obsidian-linter"]
+    V020_ADDED = ("hotkeys.json", "layout-preset.json", "plugins/table-editor-obsidian/data.json")
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        old_seed = self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian"
+        shutil.copytree(SEEDED, old_seed)
+        for name in self.V020_ADDED:
+            (old_seed / name).unlink()
+        (old_seed / "community-plugins.json").write_text(json.dumps(self.V020_PLUGINS))
+        self.settings = self.root / "notebook/.obsidian"
+        shutil.copytree(old_seed, self.settings)
+        gitignore = [line for line in (KIT / "seed/common/.gitignore").read_text().splitlines()
+                     if "table-editor-obsidian" not in line and "darlal-switcher-plus" not in line]
+        (self.root / ".gitignore").write_text("\n".join(gitignore) + "\n")
+        git(self.root, "init", "-q", "-b", "main")
+        git(self.root, "add", "-A")
+        git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "v0.2.0")
+
+    def run_tool(self, *args):
+        return subprocess.run([sys.executable, str(KIT / "tools/upgrade-obsidian.py"), "--root", str(self.root),
+                               "--allow-running", *args], capture_output=True, text=True)
+
+    def check(self, *args):
+        return subprocess.run([sys.executable, str(KIT / "tools/check-obsidian.py"), "--root", str(self.root),
+                               *args], capture_output=True, text=True)
+
+    def test_unchanged_vault_ends_identical_to_the_seed(self):
+        proc = self.run_tool()
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertIn("create   hotkeys.json", proc.stdout)
+        self.assertIn("update   community-plugins.json: (file) +table-editor-obsidian, (file) +darlal-switcher-plus",
+                      proc.stdout)
+        self.assertEqual(0, self.check("--strict").returncode, self.check().stdout)
+        gitignore = (self.root / ".gitignore").read_text()
+        self.assertIn("!notebook/.obsidian/plugins/darlal-switcher-plus/data.json", gitignore)
+        self.assertLess(gitignore.index("!notebook/.obsidian/plugins/table-editor-obsidian/\n"),
+                        gitignore.index("notebook/.obsidian/plugins/*/*"))
+
+    def test_local_changes_are_kept(self):
+        (self.settings / "community-plugins.json").write_text(json.dumps(["calendar", "local-plugin"]))
+        app = json.loads((self.settings / "app.json").read_text())
+        (self.settings / "app.json").write_text(json.dumps({**app, "openBehavior": "file"}))
+        (self.settings / "hotkeys.json").write_text(json.dumps({"darlal-switcher-plus:switcher-plus:open": []}))
+        self.run_tool()
+        plugins = json.loads((self.settings / "community-plugins.json").read_text())
+        # The workspace removed Linter itself; the kit's additions arrive; its own plugin stays.
+        self.assertEqual(["calendar", "local-plugin", "table-editor-obsidian", "darlal-switcher-plus"], plugins)
+        self.assertEqual("file", json.loads((self.settings / "app.json").read_text())["openBehavior"])
+        hotkeys = json.loads((self.settings / "hotkeys.json").read_text())
+        self.assertEqual([], hotkeys["darlal-switcher-plus:switcher-plus:open"])
+        self.assertIn("global-search:open", hotkeys)
+
+    def test_dry_run_writes_nothing_and_a_second_run_changes_nothing(self):
+        before = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file() and ".git" not in p.parts}
+        self.assertIn("would create", self.run_tool("--dry-run").stdout)
+        after = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file() and ".git" not in p.parts}
+        self.assertEqual(before, after)
+        self.run_tool()
+        second = self.run_tool().stdout
+        self.assertNotIn("create", second)
+        self.assertNotIn("update", second)
+        self.assertNotIn("add ", second)
+
+    def test_base_seed_from_a_v01_scion_path(self):
+        git(self.root, "mv", ".scions/notebook-conventions/seed/common/notebook/.obsidian",
+            ".scions/notebook-conventions/seed/common/.obsidian")
+        git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "v0.1 layout")
+        self.run_tool()
+        self.assertEqual(0, self.check("--strict").returncode, self.check().stdout)
+
+    def test_an_already_committed_upgrade_asks_for_the_earlier_base(self):
+        shutil.rmtree(self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian")
+        shutil.copytree(SEEDED, self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian")
+        git(self.root, "add", "-A")
+        git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "upgrade")
+        out = self.run_tool().stdout
+        self.assertIn("community-plugins.json: differ from the kit", out)
+        self.assertIn("--base", out)
+        self.run_tool("--base", "HEAD~1")
+        self.assertEqual(0, self.check("--strict").returncode, self.check().stdout)
+
+    def test_stale_root_settings_are_reported(self):
+        (self.root / ".obsidian").mkdir()
+        self.assertIn("Obsidian has opened the root as a vault", self.run_tool().stdout)
+        proc = self.check()
+        self.assertIn("stale: .obsidian/", proc.stdout)
+        self.assertFalse((self.root / ".obsidian/app.json").exists())
 
 
 if __name__ == "__main__":

@@ -78,11 +78,32 @@ The settings are seeded, so a workspace owns its copy. `nix run .#check-obsidian
 the vault's copy. It compares JSON, not text, because Obsidian rewrites formatting. It lists each file as same,
 changed (and which keys or list items differ), or missing. It also shows each pinned plugin's installed version
 and whether its `main.js` matches the pinned release. A changed file is a local choice, not an error; `--strict`
-exits 1 on changed or missing files. When a release changes a seeded setting, its changelog **Upgrading** steps
-say what to copy.
+exits 1 on changed or missing files.
+
+`nix run .#upgrade-obsidian` applies a kit release's setting changes. Run it on the upgrade branch after
+`nix run .#graft upgrade`, with Obsidian closed, because Obsidian rewrites its settings while it runs. For each
+seeded file it merges three versions: the seed in the scion at `--base` (default `HEAD`, which still holds the
+old scion until the upgrade is committed), the current seed, and the vault's copy.
+
+- A kit change applies where the vault still has the old value. Where the workspace changed the same setting, its
+  value is kept and listed as `kept`.
+- Objects merge key by key. Lists of plain values, such as `community-plugins.json`, merge as sets and keep the
+  vault's order. A missing file is created.
+- It adds the seed's `.gitignore` exceptions for plugin settings. It does not install plugins.
+- `--dry-run` writes nothing. Running it again changes nothing.
+- If the upgrade is already committed, pass the commit before it as `--base`. The tool says so when the base's
+  seed matches the current one and a file still differs.
 
 A preference meant for every workspace goes into the kit's seed first and is then released. A setting only one
 workspace wants stays in that workspace. The check then lists it as changed, as a reminder.
+
+### Moving the vault
+
+Obsidian keeps its own list of vaults. After a vault moves (v0.2 moved it from the repository root into
+`notebook/`), the old entry still opens the old folder. Obsidian then writes default settings into a new
+`.obsidian/` there: no community plugins, so no Restricted mode prompt and none of the shortcuts. Use **Open
+folder as vault** on `notebook/`, remove the old entry from the vault list, then delete the stray `.obsidian/`.
+Both checks report a `.obsidian/` at the repository root.
 
 ## Markdown formatting
 
@@ -118,5 +139,5 @@ It falls back to `nix develop` when `markdownlint-cli2` is not on `PATH`.
 - [Obsidian Linter](https://github.com/platers/obsidian-linter)
 - [Pinned plugin releases](obsidian-plugins.json), checked against the GitHub release assets
 - [Seed Obsidian settings](../seed/common/notebook/.obsidian/app.json)
-- [Settings drift check](../tools/check-obsidian.py)
+- [Settings drift check](../tools/check-obsidian.py) and [settings upgrade](../tools/upgrade-obsidian.py)
 - [Pre-commit hook](../tools/hooks/pre-commit)

@@ -1,5 +1,34 @@
 # Changelog
 
+## v0.2.2 - 2026-11-07
+
+### Added
+
+- `nix run .#upgrade-obsidian` applies a release's seeded Obsidian settings to the vault. For each seeded file it
+  merges the old seed (in the scion at `--base`, default `HEAD`), the new seed, and the vault's copy: kit changes
+  apply where the vault kept the old value, and local changes are kept and reported. It creates missing files and
+  adds the seed's `.gitignore` exceptions for plugin settings. It does not install plugins; `--dry-run` writes
+  nothing. It refuses to write while Obsidian is running.
+- `check-obsidian` and `upgrade-obsidian` report a `.obsidian/` at the repository root. Obsidian creates one,
+  with default settings, when it still opens the vault from before the v0.2 move. That is why a vault there has no
+  community plugins and none of the shortcuts ([Obsidian](docs/obsidian.md#moving-the-vault)).
+
+### Changed
+
+- `convert` says to remove the old root vault from Obsidian's list, not only to open `notebook/`.
+
+### Upgrading
+
+From v0.2.1, nothing changes in the workspace's files.
+
+1. `nix run .#graft upgrade notebook-conventions@v0.2.2`.
+2. If the workspace has not applied v0.2.1's Obsidian settings yet, quit Obsidian and run
+   `nix run .#upgrade-obsidian` instead of v0.2.1's steps 2 and 3. Read its `kept` and `by hand:` lines.
+3. If either tool reports a `.obsidian/` at the repository root, open `notebook/` as the vault, remove the old
+   vault from Obsidian's list, and delete that folder.
+
+Done when `nix run .#check-obsidian` reports no stale folder and every `changed` file is a deliberate local choice.
+
 ## v0.2.1 - 2026-11-07
 
 The seed carries the full set of shared Obsidian preferences, and a check reports where a vault has drifted

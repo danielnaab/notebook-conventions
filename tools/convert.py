@@ -232,7 +232,8 @@ class Converter:
             if updated != text:
                 gitignore.write_text(updated)
                 self.log("re-anchored .obsidian/ patterns in .gitignore")
-        self.manual.append("reopen the vault in Obsidian at notebook/ (Open folder as vault)")
+        self.manual.append("reopen the vault in Obsidian at notebook/ (Open folder as vault) and remove the old root "
+                           "vault from its list; otherwise Obsidian writes default settings into a new root .obsidian/")
 
     def write_okfignore(self) -> None:
         ignore = self.root / NOTEBOOK / ".okfignore"

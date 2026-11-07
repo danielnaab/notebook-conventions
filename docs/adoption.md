@@ -42,7 +42,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
 | --- | --- |
 | Conventions | Links into `.scions/notebook-conventions/docs/`; the local `docs/conventions.md` states only local rules. |
 | Agent skills | `.pi/settings.json` lists `../.scions/notebook-conventions/skills` under `skills`. |
-| Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the pinned kit input; apps run its `tools/`: `check-kb`, `check-tasks`, `check-templates`, `check-obsidian`, `index`, `move`, and `convert` (the v0.2 upgrade). |
+| Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the pinned kit input; apps run its `tools/`: `check-kb`, `check-tasks`, `check-templates`, `check-obsidian`, `upgrade-obsidian`, `index`, `move`, and `convert` (the v0.2 upgrade). |
 | Hook | The seeded `.githooks/pre-commit` wrapper runs the kit's hook; `core.hooksPath` is `.githooks`. |
 
 ## Local overlay
@@ -65,7 +65,10 @@ seeded for the same reason; `nix run .#check-obsidian` lists which still match t
    own files, including seeded files that changed.
 4. On the upgrade branch, `nix run .#graft migrate` prints a brief for an agent or a person: what moved, the
    rules, the provider's changelog text, the scion diff, and the workspace lines that name moved paths.
-5. Apply the steps, run `nix flake check` and the repository checks, then commit `flake.nix`, `flake.lock`,
+5. If the release changed seeded Obsidian settings, quit Obsidian and run `nix run .#upgrade-obsidian`
+   ([Obsidian](obsidian.md#keeping-settings-in-sync)); it merges them into the vault's copies and keeps local
+   changes.
+6. Apply the steps, run `nix flake check` and the repository checks, then commit `flake.nix`, `flake.lock`,
    `.scions/`, and the workspace changes together.
 
 Never edit `.scions/`; it is replaced on every graft.

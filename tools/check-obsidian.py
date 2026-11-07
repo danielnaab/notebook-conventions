@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Report how a workspace's shared Obsidian settings differ from the kit's seeded copies.
 
-The seed's `notebook/.obsidian/` files are copied once, so later kit changes reach a workspace only when it
-copies them again. This read-only check compares each seeded settings file with the vault's copy as JSON
-(Obsidian rewrites formatting) and lists it as same, changed, or missing. Changed is not an error: a
+The seed's `notebook/.obsidian/` files are copied once; `upgrade-obsidian` applies later kit changes to them.
+This read-only check compares each seeded settings file with the vault's copy as JSON (Obsidian rewrites
+formatting) and lists it as same, changed, or missing. Changed is not an error: a
 workspace may adapt a setting. It also lists each pinned community plugin's installed state from
 docs/obsidian-plugins.json; installation is per machine and never affects the exit code.
-Use --strict to exit 1 on missing or changed settings files.
+It warns when a `.obsidian/` at the repository root shows Obsidian has the old vault open.
+Use --strict to exit 1 on missing or changed settings files, or that stale folder.
 """
 
 import argparse
@@ -15,24 +16,11 @@ import json
 import sys
 from pathlib import Path
 
-import yaml
+import obsidian_settings as obs
+from obsidian_settings import PINS, SEEDED, vault_folder
 
-KIT = Path(__file__).resolve().parents[1]
-SEEDED = KIT / "seed/common/notebook/.obsidian"
-PINS = KIT / "docs/obsidian-plugins.json"
-DEFAULT_VAULT = "notebook"
 # Obsidian's in-app installer appends this to main.js; the pinned hashes are of the release assets.
 INSTALLER_SUFFIX = b"\n/* nosourcemap */"
-
-
-def vault_folder(root: Path) -> str:
-    config = root / "knowledge-base.yaml"
-    if config.is_file():
-        data = yaml.safe_load(config.read_text()) or {}
-        value = (data.get("paths") or {}).get("vault")
-        if isinstance(value, str) and value.strip("/"):
-            return value.strip("/")
-    return DEFAULT_VAULT
 
 
 def describe(kit_value, local_value) -> str:
@@ -106,7 +94,12 @@ def main() -> int:
     print("plugins (docs/obsidian-plugins.json):")
     for plugin, state in plugin_states(root):
         print(f"  {plugin}: {state}")
-    if args.strict and any(state != "same" for _, state, _ in settings):
+    stale = obs.stale_root_settings(root)
+    if stale:
+        print(f"stale: {stale.relative_to(root)}/ at the repository root: Obsidian has opened the root as a vault, "
+              f"with default settings. Open {vault_folder(root)}/ as the vault, remove the old one from Obsidian's "
+              f"list, then delete {stale.relative_to(root)}/.")
+    if args.strict and (stale or any(state != "same" for _, state, _ in settings)):
         return 1
     return 0
 
