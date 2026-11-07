@@ -10,3 +10,4 @@ status: living
 - [Conformance with the meta-KB](conformance.md): the policies, deviations, and checks.
 - [Obsidian and Markdown formatting](obsidian.md): vault settings, lint rule, and the pre-commit hook.
 - [Adopt and upgrade the kit](adoption.md): start a workspace, reference the kit, and upgrade.
+- [Proposal: the notebook as an OKF vault](proposal-okf-vault.md): draft, not adopted.
