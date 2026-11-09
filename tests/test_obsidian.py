@@ -236,6 +236,18 @@ class UpgradeObsidianTest(unittest.TestCase):
         self.assertNotIn("update", second)
         self.assertNotIn("add ", second)
 
+    def test_appearance_seed_added_over_a_vault_that_has_its_own(self):
+        # v0.5.0 seeds appearance.json; a vault Obsidian already wrote one for keeps its own values.
+        git(self.root, "rm", "-q", ".scions/notebook-conventions/seed/common/notebook/.obsidian/appearance.json")
+        git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "v0.4.0")
+        (self.settings / "appearance.json").write_text(json.dumps({"showRibbon": True, "baseFontSize": 16}))
+        proc = self.run_tool()
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        merged = json.loads((self.settings / "appearance.json").read_text())
+        seeded = json.loads((SEEDED / "appearance.json").read_text())
+        self.assertEqual({**seeded, "showRibbon": True, "baseFontSize": 16}, merged)
+        self.assertIn("kept       appearance.json: local value for baseFontSize", proc.stdout)
+
     def test_base_seed_from_a_v01_scion_path(self):
         git(self.root, "mv", ".scions/notebook-conventions/seed/common/notebook/.obsidian",
             ".scions/notebook-conventions/seed/common/.obsidian")

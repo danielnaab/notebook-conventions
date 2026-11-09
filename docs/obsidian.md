@@ -6,7 +6,7 @@ status: working
 
 `notebook/` is the Obsidian vault (Open folder as vault), so the vault is the OKF bundle and nothing else: code,
 workspace docs, and `.scions/` stay outside it. Obsidian is a view over the same Markdown agents maintain.
-The [seed](../seed/common/notebook/.obsidian/) carries shared core settings, shortcuts, a layout preset, and
+The [seed](../seed/common/notebook/.obsidian/) carries shared core settings, appearance, shortcuts, a layout preset, and
 reviewed plugin settings; machine-specific UI state stays local.
 
 ## Shared settings
@@ -24,6 +24,7 @@ reviewed plugin settings; machine-specific UI state stays local.
 | Command picker | `Mod-Shift-P`: Quick Switcher++ command mode; the stock command palette has no shortcut |
 | Vault-wide Search | `Mod-Shift-F` |
 | Right sidebar | Calendar above Search; Backlinks, Outgoing links, All properties, and Outline are tabs beside Search |
+| Appearance | Base theme follows the system; default CSS theme and fonts; base font size 20; no translucency; ribbon shown |
 
 - Paths in the settings are relative to the vault, `notebook/`. Templates must live in a visible folder, which is
   why a workspace copies them from the kit into `notebook/templates/`.

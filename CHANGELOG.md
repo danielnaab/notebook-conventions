@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.5.0 - 2026-11-09
+
+The seed carries Obsidian's appearance settings, so every workspace gets the same look through `just upgrade`.
+
+### Added
+
+- `seed/common/notebook/.obsidian/appearance.json`: base theme follows the system, default CSS theme and fonts,
+  base font size 20, no translucency, ribbon shown ([shared settings](docs/obsidian.md#shared-settings)).
+
+### Upgrading
+
+1. `just upgrade notebook-conventions@v0.5.0`, with Obsidian closed. Its `upgrade-obsidian` step creates
+   `notebook/.obsidian/appearance.json`, or, where Obsidian already wrote one, adds the kit's keys and keeps the
+   vault's own values, listing each as `kept   appearance.json: local value for <key>`.
+   With Obsidian open, quit it and run `just upgrade-obsidian`.
+2. A kept value is a local choice. To take the kit's instead, copy it from
+   `.scions/notebook-conventions/seed/common/notebook/.obsidian/appearance.json`.
+3. Commit `notebook/.obsidian/appearance.json` with the upgrade. Done when `just check-obsidian` lists
+   `appearance.json` as same, or changed only in keys the workspace chose to keep.
+
 ## v0.4.0 - 2026-11-09
 
 The kit installs its pinned Obsidian community plugins, so a release that adds a plugin or moves a pin reaches
