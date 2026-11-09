@@ -80,11 +80,16 @@ outdated *args:
 changelog *names:
     {{graft_run}} changelog "$@"
 
-# Move scion pins (e.g. notebook-conventions@vX.Y.Z) and rebuild .scions/, then list the next steps
+# Move scion pins (e.g. notebook-conventions@vX.Y.Z), rebuild .scions/, apply the kit's Obsidian settings and
+# plugins (upgrade-obsidian), then list the next steps
 [group('deps')]
 [positional-arguments]
 upgrade *targets:
     {{graft_run}} upgrade "$@"
+    @echo
+    @# A fresh just, so tools that resolve kit_run once (a built tools path) use the new pin.
+    @{{just_executable()}} --justfile {{quote(justfile())}} upgrade-obsidian \
+        || echo "upgrade-obsidian did not run: quit Obsidian, then run just upgrade-obsidian before committing"
     @echo
     @echo "Next steps:"
     @echo "  1. Read each upgraded scion's CHANGELOG.md, its Upgrading sections in particular: just changelog"
@@ -104,7 +109,8 @@ migrate *args:
 sync *args:
     {{graft_run}} "$@"
 
-# Merge the kit's seeded Obsidian settings into the vault, keeping local changes (quit Obsidian first; --dry-run)
+# Merge the kit's Obsidian settings into the vault, keeping local changes, and install its pinned plugins
+# (quit Obsidian first; --dry-run, --no-plugins)
 [group('migrations')]
 [positional-arguments]
 upgrade-obsidian *args:

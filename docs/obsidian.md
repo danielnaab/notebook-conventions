@@ -32,8 +32,8 @@ reviewed plugin settings; machine-specific UI state stays local.
   `@Full Name` alias, so `[[@` lists people. Links to notes not written yet show in the graph and create the
   note on click.
 - Track plugin `data.json` files only for plugins you have reviewed: preferences can contain credentials or
-  private text. Keep plugin executables, manifests, caches, and live workspace state ignored. A clone restores
-  preferences, not plugin installations.
+  private text. Keep plugin executables, manifests, caches, and live workspace state ignored: a clone restores
+  preferences, and `just upgrade-obsidian` installs the pinned plugins.
 - Agents must not inspect or alter Obsidian's application profile to bypass its per-vault plugin approval.
 - `hotkeys.json` uses `Mod`, which is Cmd on macOS and Ctrl elsewhere. The picker shortcuts call Quick
   Switcher++ commands, so they do nothing until that plugin is installed and enabled.
@@ -51,15 +51,22 @@ SHA-256 of each release asset.
 | [Advanced Tables](https://github.com/tgrosinger/advanced-tables-obsidian) | `table-editor-obsidian` | 0.23.2 | Defaults: Enter and Tab navigate tables; normal format |
 | [Quick Switcher++](https://github.com/darlal/obsidian-switcher-plus) | `darlal-switcher-plus` | 6.2.0 | Defaults (no `data.json`); its commands carry the picker shortcuts |
 
-- Installing a plugin is the owner's decision, made once per vault in the UI. Obsidian asks to turn off
-  Restricted mode first. Whether a workspace may use these plugins at all is up to its boundaries.
+- `just upgrade-obsidian` installs them, and `just upgrade` runs it, so a kit release that moves a pin or adds a
+  plugin reaches every workspace with its settings. It installs only the pinned plugins the vault's
+  `community-plugins.json` lists: a workspace whose boundaries rule a plugin out removes it there, and the kit's
+  later upgrades keep that removal. `--no-plugins` merges settings only.
+- The releases come from the kit's Nix wiring (`packages.obsidian-plugins` in `nix/workspace.nix`), which
+  downloads each pinned asset and checks its SHA-256; the tool checks them again before copying. It writes
+  `main.js`, `manifest.json`, and `styles.css` (where the release has one) and leaves `data.json` alone. A plugin
+  that already matches its pin, including the in-app installer's copy (see below), is left as it is.
+- Obsidian asks once per vault, on each device, to turn off Restricted mode and trust the vault's plugins. That
+  prompt stays the owner's: the tool does not answer it.
 - A pin records the release the seeded settings were written against and lets a download be checked. It is not
   a security review. Obsidian's update check may offer newer versions; moving a pin is a kit change: check the
   release and its settings, update the pin, then release the kit.
-- To install without the UI, download `main.js`, `manifest.json`, and `styles.css` (where one exists) from the
-  pinned release into `notebook/.obsidian/plugins/<id>/`, check them against the pinned hashes, and leave
-  `data.json` alone. The in-app installer appends `/* nosourcemap */` to `main.js`, so its file matches the
-  pin only without that last line.
+- The in-app installer appends `/* nosourcemap */` to `main.js`, so its file matches the pin only without that
+  last line. Installing or updating a plugin in the UI works too; `check-obsidian` then reports whether it still
+  matches the pin.
 - Calendar uses the core Daily notes folder, format, and template, including the month folder.
 
 ## Layout preset
@@ -80,8 +87,8 @@ changed (and which keys or list items differ), or missing. It also shows each pi
 and whether its `main.js` matches the pinned release. A changed file is a local choice, not an error; `--strict`
 exits 1 on changed or missing files.
 
-`just upgrade-obsidian` applies a kit release's setting changes. Run it on the upgrade branch after
-`just upgrade`, with Obsidian closed, because Obsidian rewrites its settings while it runs. For each
+`just upgrade-obsidian` applies a kit release's setting and plugin changes, and `just upgrade` runs it after
+moving the pins. Run it on the upgrade branch, with Obsidian closed, because Obsidian rewrites its settings while it runs. For each
 seeded file it merges three versions: the seed in the scion at `--base` (default `HEAD`, which still holds the
 old scion until the upgrade is committed), the current seed, and the vault's copy.
 
@@ -89,7 +96,8 @@ old scion until the upgrade is committed), the current seed, and the vault's cop
   value is kept and listed as `kept`.
 - Objects merge key by key. Lists of plain values, such as `community-plugins.json`, merge as sets and keep the
   vault's order. A missing file is created.
-- It adds the seed's `.gitignore` exceptions for plugin settings. It does not install plugins.
+- It adds the seed's `.gitignore` exceptions for plugin settings, then installs the pinned plugins the merged
+  `community-plugins.json` lists ([community plugins](#community-plugins)).
 - `--dry-run` writes nothing. Running it again changes nothing. While Obsidian runs it refuses to write
   (`--allow-running` overrides); with nothing to write it reports and exits 0.
 - If the upgrade is already committed, pass the commit before it as `--base`. The tool says so when the base's

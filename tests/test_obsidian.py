@@ -124,7 +124,7 @@ class CheckObsidianTest(unittest.TestCase):
         body = b"release body"
         folder = self.settings / "plugins" / pin["id"]
         (folder / "manifest.json").write_text(json.dumps({"id": pin["id"], "version": pin["version"]}))
-        (folder / "main.js").write_bytes(body + check_obsidian.INSTALLER_SUFFIX)
+        (folder / "main.js").write_bytes(body + obs.INSTALLER_SUFFIX)
         pins = self.root / "pins.json"
         pins.write_text(json.dumps({"plugins": [{**pin, "assets": {"main.js": hashlib.sha256(body).hexdigest()}}]}))
         self.assertEqual([(pin["id"], f"installed {pin['version']}, matches the pinned release")],
@@ -294,6 +294,86 @@ class UpgradeObsidianTest(unittest.TestCase):
         proc = self.check()
         self.assertIn("stale: .obsidian/", proc.stdout)
         self.assertFalse((self.root / ".obsidian/app.json").exists())
+
+
+
+upgrade_obsidian = importlib.util.module_from_spec(
+    spec := importlib.util.spec_from_file_location("upgrade_obsidian", KIT / "tools/upgrade-obsidian.py"))
+spec.loader.exec_module(upgrade_obsidian)
+
+
+class InstallPluginsTest(unittest.TestCase):
+    """Installs from a stand-in for the Nix-fetched releases, with pins written for it."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        self.settings, self.assets, self.pins = root / "notebook/.obsidian", root / "assets", root / "pins.json"
+        pins = []
+        for plugin in ("alpha", "beta"):
+            files = {"main.js": f"{plugin} code".encode(), "manifest.json": json.dumps({"version": "1.0"}).encode()}
+            (self.assets / plugin).mkdir(parents=True)
+            for name, body in files.items():
+                (self.assets / plugin / name).write_bytes(body)
+            pins.append({"id": plugin, "version": "1.0",
+                         "assets": {n: hashlib.sha256(b).hexdigest() for n, b in files.items()}})
+        self.pins.write_text(json.dumps({"plugins": pins}))
+
+    def install(self, enabled=("alpha", "beta"), assets="default", dry_run=False):
+        return upgrade_obsidian.install_plugins(self.settings, list(enabled),
+                                                self.assets if assets == "default" else assets, dry_run, self.pins)
+
+    def test_installs_enabled_plugins_and_keeps_their_settings(self):
+        (self.settings / "plugins/alpha").mkdir(parents=True)
+        (self.settings / "plugins/alpha/data.json").write_text('{"mine": true}')
+        installed, manual = self.install(enabled=["alpha"])
+        self.assertEqual(["install  plugin alpha 1.0"], installed)
+        self.assertEqual([], manual)
+        self.assertEqual(b"alpha code", (self.settings / "plugins/alpha/main.js").read_bytes())
+        self.assertEqual('{"mine": true}', (self.settings / "plugins/alpha/data.json").read_text())
+        self.assertFalse((self.settings / "plugins/beta").exists())
+
+    def test_second_run_and_installer_suffix_change_nothing(self):
+        self.install()
+        main = self.settings / "plugins/alpha/main.js"
+        main.write_bytes(main.read_bytes() + obs.INSTALLER_SUFFIX)
+        self.assertEqual(([], []), self.install())
+
+    def test_a_changed_plugin_is_updated(self):
+        self.install()
+        (self.settings / "plugins/beta/main.js").write_text("older release")
+        self.assertEqual((["update   plugin beta 1.0"], []), self.install())
+        self.assertEqual(b"beta code", (self.settings / "plugins/beta/main.js").read_bytes())
+
+    def test_dry_run_writes_nothing(self):
+        installed, _ = self.install(dry_run=True)
+        self.assertEqual(2, len(installed))
+        self.assertFalse((self.settings / "plugins").exists())
+
+    def test_without_assets_lists_plugins_by_hand(self):
+        installed, manual = self.install(assets=None)
+        self.assertEqual([], installed)
+        self.assertEqual(2, len(manual))
+        self.assertIn("just upgrade-obsidian", manual[0])
+
+    def test_assets_not_matching_the_pin_are_refused(self):
+        (self.assets / "alpha/main.js").write_text("tampered")
+        installed, manual = self.install(enabled=["alpha"])
+        self.assertEqual([], installed)
+        self.assertIn("do not match the pin", manual[0])
+        self.assertFalse((self.settings / "plugins/alpha").exists())
+
+    def test_upgrade_installs_what_the_merged_settings_enable(self):
+        root = self.settings.parent.parent
+        self.settings.mkdir(parents=True)
+        (self.settings / "community-plugins.json").write_text(json.dumps(["calendar"]))
+        report = upgrade_obsidian.upgrade(root, None, dry_run=True, assets=self.assets)
+        # The merge adds the kit's plugins to the vault's list, so every pin is attempted. These stand-in assets
+        # do not match the real pins, so each is refused rather than installed.
+        refused = {m.split()[1] for m in report["manual"] if m.startswith("plugin ")}
+        self.assertEqual({p["id"] for p in PINS}, refused)
+        self.assertEqual([], report["plugins"])
 
 
 if __name__ == "__main__":

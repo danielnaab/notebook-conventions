@@ -36,7 +36,8 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
    git config core.hooksPath .githooks   # the seeded wrapper runs the kit's hook
    ```
 
-6. Open `notebook/` as the Obsidian vault.
+6. Run `just upgrade-obsidian` to install the pinned community plugins (on each clone, since plugin code is not
+   tracked), then open `notebook/` as the Obsidian vault and trust its plugins when asked.
 7. Check: `just check` (graft check, check-kb, check-tasks, `index --check`, check-obsidian),
    `just check-obsidian --strict`, and `nix flake check`. `just` alone lists every operation.
 
@@ -209,9 +210,9 @@ seeded for the same reason; `just check-obsidian` lists which still match the ki
    scion). **Upgrading** says what to change in the workspace's own files, including seeded files that changed.
 4. On the upgrade branch, `just migrate` prints a brief for an agent or a person: what moved, the rules, the
    provider's changelog text, the scion diff, and the workspace lines that name moved paths.
-5. If the release changed seeded Obsidian settings, quit Obsidian and run `just upgrade-obsidian`
-   ([Obsidian](obsidian.md#keeping-settings-in-sync)); it merges them into the vault's copies and keeps local
-   changes.
+5. Step 2 also ran `just upgrade-obsidian` ([Obsidian](obsidian.md#keeping-settings-in-sync)): it merges the
+   kit's seeded settings into the vault's copies, keeping local changes, and installs the pinned plugins. If
+   Obsidian was open, it did not run: quit Obsidian and run it before committing.
 6. Apply the steps, run `just check` and `nix flake check` (`nix flake check path:nix/workspace` for a
    [flake in a subdirectory](#a-workspace-whose-content-must-not-enter-the-nix-store)), then commit the flake's
    `flake.nix` and `flake.lock`, `.scions/`, and the workspace changes together.

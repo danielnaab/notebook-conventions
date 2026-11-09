@@ -250,11 +250,12 @@ class JustMenuTest(unittest.TestCase):
         self.assertEqual([["move", "notebook/a b.md", "notebook/c.md", "--dry-run"], ["index", "--check"],
                           ["graft", "changelog", "notebook-conventions"]], self.calls())
 
-    def test_sync_runs_graft_bare_and_upgrade_lists_next_steps(self):
+    def test_sync_runs_graft_bare_and_upgrade_applies_obsidian_and_lists_next_steps(self):
         self.just("sync")
         proc = self.just("upgrade", "notebook-conventions@v9.9.9")
         self.assertEqual(0, proc.returncode, proc.stderr)
-        self.assertEqual([["graft"], ["graft", "upgrade", "notebook-conventions@v9.9.9"]], self.calls())
+        self.assertEqual([["graft"], ["graft", "upgrade", "notebook-conventions@v9.9.9"], ["upgrade-obsidian"]],
+                         self.calls())
         for step in ("just changelog", "just migrate", "just check", "Commit"):
             self.assertIn(step, proc.stdout)
 

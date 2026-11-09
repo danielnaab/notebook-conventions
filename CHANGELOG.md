@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.4.0 - 2026-11-09
+
+The kit installs its pinned Obsidian community plugins, so a release that adds a plugin or moves a pin reaches
+every workspace through `just upgrade`, with the settings, instead of by hand in each vault.
+
+### Added
+
+- `packages.<system>.obsidian-plugins` in `nix/workspace.nix`: each pinned release asset from
+  `docs/obsidian-plugins.json`, downloaded and checked against its SHA-256, as `<id>/<asset>`.
+- `upgrade-obsidian` installs the pinned plugins the vault's `community-plugins.json` lists, after merging the
+  settings: a plugin missing or not matching its pin gets `main.js`, `manifest.json`, and `styles.css`; its
+  `data.json` is left alone. It checks each asset against the pin before copying. `--no-plugins` merges settings
+  only. Run without the kit's Nix wiring, it lists the plugins to install and installs none.
+
+### Changed
+
+- `just upgrade` runs `just upgrade-obsidian` after graft, in a fresh `just` so a workspace whose `kit_run` names
+  a built tools path gets the new pin's tools. If Obsidian is open it does not run, and `just upgrade` says so.
+- A workspace opts out of a kit plugin by removing it from `community-plugins.json`; later upgrades keep the
+  removal and install nothing for it.
+- [Obsidian](docs/obsidian.md#community-plugins) and [adoption](docs/adoption.md): installing the plugins is
+  `just upgrade-obsidian`, on each clone and each upgrade; the hand-download steps are gone. Obsidian's
+  one-time trust prompt per vault and device is unchanged.
+
+### Upgrading
+
+1. `just upgrade notebook-conventions@v0.4.0`, with Obsidian closed. It runs `upgrade-obsidian`, which installs
+   the plugins: look for `install   plugin <id> <version>` lines. With Obsidian open, quit it and run
+   `just upgrade-obsidian`.
+2. A workspace whose `kit_run` runs the tools some other way than the kit's Nix wiring (the default `nix run`,
+   or the `tools` package from `nix/workspace.nix`) sees `by hand: plugin ...` lines instead; point `kit_run` at
+   the kit's tools.
+3. A workspace whose boundaries rule out a kit plugin: remove its id from
+   `notebook/.obsidian/community-plugins.json` before step 1.
+4. Done when `just check-obsidian` shows each enabled plugin as `matches the pinned release`. Open the vault and
+   accept Obsidian's prompt to trust its plugins. Plugin code stays ignored by git; there is nothing new to
+   commit for it. On each other clone, run `just upgrade-obsidian` once after pulling.
+
 ## v0.3.1 - 2026-11-09
 
 Fixes found while upgrading a workspace to v0.3.0.

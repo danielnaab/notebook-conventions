@@ -5,22 +5,18 @@ The seed's `notebook/.obsidian/` files are copied once; `upgrade-obsidian` appli
 This read-only check compares each seeded settings file with the vault's copy as JSON (Obsidian rewrites
 formatting) and lists it as same, changed, or missing. Changed is not an error: a
 workspace may adapt a setting. It also lists each pinned community plugin's installed state from
-docs/obsidian-plugins.json; installation is per machine and never affects the exit code.
+docs/obsidian-plugins.json; `upgrade-obsidian` installs them, and their state never affects the exit code.
 It warns when a `.obsidian/` at the repository root shows Obsidian has the old vault open.
 Use --strict to exit 1 on missing or changed settings files, or that stale folder.
 """
 
 import argparse
-import hashlib
 import json
 import sys
 from pathlib import Path
 
 import obsidian_settings as obs
 from obsidian_settings import PINS, SEEDED, vault_folder
-
-# Obsidian's in-app installer appends this to main.js; the pinned hashes are of the release assets.
-INSTALLER_SUFFIX = b"\n/* nosourcemap */"
 
 
 def describe(kit_value, local_value) -> str:
@@ -70,11 +66,7 @@ def plugin_states(root: Path, pins: Path = PINS) -> list[tuple[str, str]]:
         if version != pin["version"]:
             result.append((pin["id"], f"installed {version}, pinned {pin['version']}"))
             continue
-        main = folder / "main.js"
-        data = main.read_bytes() if main.is_file() else b""
-        if data.endswith(INSTALLER_SUFFIX):
-            data = data[: -len(INSTALLER_SUFFIX)]
-        if hashlib.sha256(data).hexdigest() == pin["assets"]["main.js"]:
+        if obs.asset_matches(folder / "main.js", pin["assets"]["main.js"]):
             result.append((pin["id"], f"installed {version}, matches the pinned release"))
         else:
             result.append((pin["id"], f"installed {version}, main.js differs from the pinned release"))

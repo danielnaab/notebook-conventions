@@ -5,8 +5,9 @@
 #
 # Needs the inputs `nixpkgs` and `knowledge-base-integrity` (flake = false), and `self` (for the task check).
 #
-# Outputs: a dev shell; an app per kit tool (nix run .#check-kb); the task check; and packages.tools, one
-# directory whose bin/ holds every kit tool plus just and markdownlint-cli2.
+# Outputs: a dev shell; an app per kit tool (nix run .#check-kb); the task check; packages.tools, one directory
+# whose bin/ holds every kit tool plus just and markdownlint-cli2; and packages.obsidian-plugins, the pinned
+# community-plugin releases that upgrade-obsidian installs.
 #
 # extraPackages: pkgs -> [ packages ] the workspace adds to the tools package (and so to the dev shell).
 #
@@ -26,6 +27,17 @@ let
   forAll = f: lib.genAttrs systems (system: f inputs.nixpkgs.legacyPackages.${system});
   python = pkgs: pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
   kbiSrc = "${inputs.knowledge-base-integrity}/src";
+  # The pinned community-plugin releases (docs/obsidian-plugins.json), fetched and checked against their hashes:
+  # <id>/<asset> for each, which upgrade-obsidian installs into the vault.
+  obsidianPlugins = pkgs: pkgs.linkFarm "obsidian-plugins" (lib.concatMap (pin:
+    lib.mapAttrsToList (asset: sha256: {
+      name = "${pin.id}/${asset}";
+      path = pkgs.fetchurl {
+        name = "obsidian-${pin.id}-${pin.version}-${asset}";
+        url = "${lib.replaceStrings [ "/releases/tag/" ] [ "/releases/download/" ] pin.release}/${asset}";
+        inherit sha256;
+      };
+    }) pin.assets) (lib.importJSON ../docs/obsidian-plugins.json).plugins);
   # the flake's source is the workspace only when the flake is at its top
   atTop = lib.elem (lib.removeSuffix "/" flakeDir) [ "." "" ];
 
@@ -50,6 +62,8 @@ let
       runtimeInputs = [ (python pkgs) ];
       text = lib.optionalString (lib.elemAt spec 2) ''
         export KBI_SRC=${kbiSrc}
+      '' + lib.optionalString (name == "upgrade-obsidian") ''
+        export OBSIDIAN_PLUGIN_ASSETS=${obsidianPlugins pkgs}
       '' + ''
         exec python ${kit}/tools/${lib.elemAt spec 0} "$@"
       '';
@@ -68,7 +82,7 @@ in {
     };
   });
 
-  packages = forAll (pkgs: { tools = toolsPackage pkgs; });
+  packages = forAll (pkgs: { tools = toolsPackage pkgs; obsidian-plugins = obsidianPlugins pkgs; });
 
   apps = forAll (pkgs: lib.mapAttrs (_: drv: {
     type = "app";

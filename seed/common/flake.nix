@@ -9,7 +9,7 @@
       flake = false;
     };
     notebook-conventions = {
-      url = "github:danielnaab/notebook-conventions/v0.3.1";
+      url = "github:danielnaab/notebook-conventions/v0.4.0";
       flake = false;
     };
     knowledge-base-integrity = {

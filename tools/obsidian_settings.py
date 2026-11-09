@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -13,6 +15,11 @@ SEEDED = KIT / "seed/common/notebook/.obsidian"
 SEED_GITIGNORE = KIT / "seed/common/.gitignore"
 PINS = KIT / "docs/obsidian-plugins.json"
 DEFAULT_VAULT = "notebook"
+# The pinned release assets, one folder per plugin id, which the kit's Nix wiring fetches and checks against PINS
+# (nix/workspace.nix). Unset when a tool runs outside it.
+PLUGIN_ASSETS_ENV = "OBSIDIAN_PLUGIN_ASSETS"
+# Obsidian's in-app installer appends this to main.js; the pinned hashes are of the release assets.
+INSTALLER_SUFFIX = b"\n/* nosourcemap */"
 # Where earlier kit versions kept the seeded settings inside the scion: v0.2 and later, then v0.1.
 SCION_SEED_PATHS = (".scions/notebook-conventions/seed/common/notebook/.obsidian",
                     ".scions/notebook-conventions/seed/common/.obsidian")
@@ -26,6 +33,21 @@ class Missing:
 
 
 MISSING = Missing()
+
+
+def plugin_assets() -> Path | None:
+    value = os.environ.get(PLUGIN_ASSETS_ENV)
+    return Path(value) if value else None
+
+
+def asset_matches(path: Path, sha256: str) -> bool:
+    """Whether a plugin file is the pinned release asset, allowing the in-app installer's main.js suffix."""
+    if not path.is_file():
+        return False
+    data = path.read_bytes()
+    if path.name == "main.js" and data.endswith(INSTALLER_SUFFIX):
+        data = data[: -len(INSTALLER_SUFFIX)]
+    return hashlib.sha256(data).hexdigest() == sha256
 
 
 def vault_folder(root: Path) -> str:
