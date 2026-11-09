@@ -90,7 +90,8 @@ old scion until the upgrade is committed), the current seed, and the vault's cop
 - Objects merge key by key. Lists of plain values, such as `community-plugins.json`, merge as sets and keep the
   vault's order. A missing file is created.
 - It adds the seed's `.gitignore` exceptions for plugin settings. It does not install plugins.
-- `--dry-run` writes nothing. Running it again changes nothing.
+- `--dry-run` writes nothing. Running it again changes nothing. While Obsidian runs it refuses to write
+  (`--allow-running` overrides); with nothing to write it reports and exits 0.
 - If the upgrade is already committed, pass the commit before it as `--base`. The tool says so when the base's
   seed matches the current one and a file still differs.
 

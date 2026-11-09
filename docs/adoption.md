@@ -164,16 +164,30 @@ What changes:
   `just check` runs `graft check` (`.scions/` against the pins) and the kit's tools on the working tree.
   `nix flake check path:nix/workspace` still evaluates the flake.
 - Name the flake as `path:nix/workspace` in every Nix command, or let `just` do it. Inside a Git checkout a plain
-  path (`.`, `nix/workspace`) or `git+file:` reference copies the whole repository, even with `?dir=`.
+  path (`.`, `nix/workspace`) or `git+file:` reference can copy the whole repository, even with `?dir=`;
+  without lazy trees, every command does.
 - The pre-commit hook needs `markdownlint-cli2` and `just` on `PATH` (direnv, or the `tools` package): without
   a `flake.nix` at the top it has no Nix fallback.
 - An upgrade commits `nix/workspace/flake.nix`, `nix/workspace/flake.lock`, and `.scions/` together.
 
-To check the layout, put a random string in a tracked note, run the operations you use (`just`, `just check`,
-direnv), and search the store paths created since for it:
-`find /nix/store -mindepth 1 -maxdepth 1 -cnewer STAMP ! -name .links -print0 | xargs -0 grep -rlsF STRING`.
-Use `-cnewer`: Nix sets every store path's modification time to 1970, so `-newer` finds nothing. A control run,
-`nix flake metadata "git+file://$PWD?dir=nix/workspace"` in a scratch copy, finds the copy's string.
+To check the layout, use a throwaway workspace with synthetic content (for example one built from `seed/`) and the
+same `nix/workspace/` and `justfile`, never a copy of real notes: the control below copies the whole repository
+into the store. Commit a random string in a note, `touch STAMP`, run the operations you use (`just`,
+`just check`, direnv), and search the store paths created since:
+
+```sh
+find /nix/store -mindepth 1 -maxdepth 1 -cnewer STAMP ! -name .links -print0 | xargs -0 -r grep -rlsF STRING
+```
+
+- `-cnewer`: Nix sets every store path's modification time to 1970, so `-newer` finds nothing.
+- `xargs -r`: when no store path is new, plain `xargs` still runs `grep -r` with no files, which then searches
+  the current directory and reports the workspace's own note.
+- The control is `nix flake prefetch --json "git+file://$PWD?dir=nix/workspace"`: it copies the repository and
+  prints the copy's `storePath`, and the search then finds the string. `nix flake metadata` and `nix develop` are
+  no control: on Nix with lazy trees (Determinate Nix, for one) they need not copy the source. Remove the copy
+  with `nix store delete STOREPATH`.
+- `nix flake prefetch --json path:nix/workspace` checks directly: its `storePath` holds only `flake.nix` and
+  `flake.lock`.
 
 ## Local overlay
 

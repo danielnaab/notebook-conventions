@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -252,6 +253,40 @@ class UpgradeObsidianTest(unittest.TestCase):
         self.assertIn("--base", out)
         self.run_tool("--base", "HEAD~1")
         self.assertEqual(0, self.check("--strict").returncode, self.check().stdout)
+
+    def run_with_obsidian_running(self, *args):
+        """Runs the tool without --allow-running, with a `pgrep` on PATH that finds Obsidian."""
+        bin_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(bin_dir.cleanup)
+        stub = Path(bin_dir.name)
+        (stub / "pgrep").write_text("#!/bin/sh\nexit 0\n")
+        (stub / "pgrep").chmod(0o755)
+        env = {**os.environ, "PATH": f"{stub}{os.pathsep}{os.environ.get('PATH', '')}"}
+        return subprocess.run([sys.executable, str(KIT / "tools/upgrade-obsidian.py"), "--root", str(self.root),
+                               *args], capture_output=True, text=True, env=env)
+
+    def snapshot(self):
+        return {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file() and ".git" not in p.parts}
+
+    def test_running_obsidian_with_a_change_pending_refuses_and_writes_nothing(self):
+        before = self.snapshot()
+        proc = self.run_with_obsidian_running()
+        self.assertNotEqual(0, proc.returncode)
+        self.assertIn("Obsidian is running", proc.stderr)
+        self.assertEqual(before, self.snapshot())
+        dry = self.run_with_obsidian_running("--dry-run")
+        self.assertEqual(0, dry.returncode, dry.stderr)
+        self.assertIn("would create", dry.stdout)
+        self.assertEqual(before, self.snapshot())
+
+    def test_running_obsidian_with_nothing_to_change_exits_0(self):
+        self.assertEqual(0, self.run_tool().returncode)
+        before = self.snapshot()
+        proc = self.run_with_obsidian_running()
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertIn("same       app.json", proc.stdout)
+        self.assertNotIn("create", proc.stdout)
+        self.assertEqual(before, self.snapshot())
 
     def test_stale_root_settings_are_reported(self):
         (self.root / ".obsidian").mkdir()

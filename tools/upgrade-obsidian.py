@@ -8,7 +8,8 @@ value; where the workspace changed the same setting, its value is kept and repor
 created. It also adds the seed's `.gitignore` exceptions for plugin settings.
 
 Run it from the workspace root on the upgrade branch, after `just upgrade`, with Obsidian closed:
-Obsidian rewrites its settings files while it runs. `--base` defaults to HEAD, which still holds the old scion
+Obsidian rewrites its settings files while it runs. It refuses to write while Obsidian runs, and reports and exits 0
+when there is nothing to write. `--base` defaults to HEAD, which still holds the old scion
 until the upgrade is committed; after that, name the commit before it. Without a base seed, the kit's entries are
 added and existing values kept. Running it again changes nothing. It does not install plugins.
 """
@@ -128,10 +129,14 @@ def main() -> int:
     root = args.root.resolve()
     if not (root / obs.vault_folder(root)).is_dir():
         sys.exit(f"upgrade-obsidian: no {obs.vault_folder(root)}/ here; run from the workspace root")
-    if not args.dry_run and not args.allow_running and obsidian_running():
-        sys.exit("upgrade-obsidian: Obsidian is running and rewrites its settings; quit it (or --dry-run, "
-                 "or --allow-running if no vault of this workspace is open)")
-    report = upgrade(root, args.base, args.dry_run)
+    # Plan first: a running Obsidian matters only if something would be written.
+    report = upgrade(root, args.base, dry_run=True)
+    pending = report["created"] or report["updated"] or report["gitignore"]
+    if pending and not args.dry_run:
+        if not args.allow_running and obsidian_running():
+            sys.exit("upgrade-obsidian: Obsidian is running and rewrites its settings; quit it (or --dry-run, "
+                     "or --allow-running if no vault of this workspace is open)")
+        report = upgrade(root, args.base, dry_run=False)
     verb = "would " if args.dry_run else ""
     for name in report["created"]:
         print(f"{verb}create   {name}")

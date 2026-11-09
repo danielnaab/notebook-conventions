@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.3.1 - 2026-11-09
+
+Fixes found while upgrading a workspace to v0.3.0.
+
+### Fixed
+
+- `upgrade-obsidian` works out its plan first and refuses to run while Obsidian is open only if it would write
+  something (a merge, a created file, a `.gitignore` line). With nothing to write it reports and exits 0.
+  `--dry-run` and `--allow-running` are unchanged.
+- The store probe in [adoption](docs/adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store) runs
+  `xargs -0 -r`: without `-r`, when no store path was new, `grep -r` searched the current directory and reported
+  the workspace's own note.
+- The probe's control is `nix flake prefetch --json "git+file://$PWD?dir=nix/workspace"`. The old control,
+  `nix flake metadata`, does not copy the source on Nix with lazy trees, so it proved nothing.
+
+### Changed
+
+- The probe is run in a throwaway workspace with synthetic content, never a copy of real notes, since the control
+  copies the repository into the store; `nix store delete` removes the copy. `nix flake prefetch --json
+  path:nix/workspace` is documented as a direct check: its store path holds only `flake.nix` and `flake.lock`.
+- Adoption: a `git+file:` or plain-path reference *can* copy the whole repository (on lazy-tree Nix, only when
+  the source is needed); the advice to name the flake as `path:nix/workspace` is unchanged.
+- Seed `flake.nix` pins notebook-conventions v0.3.1.
+
+### Upgrading
+
+From v0.3.0. Nothing in the workspace's own files changes: `just upgrade notebook-conventions@v0.3.1`, then
+`just check`, and commit the flake's `flake.nix` and `flake.lock` with `.scions/`. To tell it is done,
+`grep -rn 'notebook-conventions/v0.3.1' flake.nix nix/workspace/flake.nix 2>/dev/null` names the new pin. If the
+workspace keeps a note or script with the old probe (`xargs -0 grep`, or `nix flake metadata` as the control),
+change it as the adoption guide now says, and run the control only in a throwaway workspace.
+
 ## v0.3.0 - 2026-11-07
 
 A `just` operations menu, read in place from the scion: `just` lists every operation a workspace has, grouped,
