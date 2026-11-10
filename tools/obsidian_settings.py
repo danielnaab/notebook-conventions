@@ -18,6 +18,12 @@ DEFAULT_VAULT = "notebook"
 # The pinned release assets, one folder per plugin id, which the kit's Nix wiring fetches and checks against PINS
 # (nix/workspace.nix). Unset when a tool runs outside it.
 PLUGIN_ASSETS_ENV = "OBSIDIAN_PLUGIN_ASSETS"
+# The workspace's declared Obsidian deviations, the `obsidian` argument to nix/workspace.nix as JSON. Unset when
+# the workspace declares none or a tool runs outside the kit's Nix wiring.
+WORKSPACE_ENV = "OBSIDIAN_WORKSPACE"
+# The CSS snippet rendered from `obsidian.identity`: a thin colored stripe across the top of the window.
+IDENTITY_SNIPPET = "vault-identity"
+IDENTITY_HEADER = "/* Rendered by notebook-conventions upgrade-obsidian from obsidian.identity in the workspace's flake. */"
 # Obsidian's in-app installer appends this to main.js; the pinned hashes are of the release assets.
 INSTALLER_SUFFIX = b"\n/* nosourcemap */"
 # Where earlier kit versions kept the seeded settings inside the scion: v0.2 and later, then v0.1.
@@ -48,6 +54,73 @@ def asset_matches(path: Path, sha256: str) -> bool:
     if path.name == "main.js" and data.endswith(INSTALLER_SUFFIX):
         data = data[: -len(INSTALLER_SUFFIX)]
     return hashlib.sha256(data).hexdigest() == sha256
+
+
+def workspace_config(path: Path | None = None) -> dict:
+    """The workspace's declared deviations: `settings` (settings file -> partial JSON) and `identity`."""
+    if path is None:
+        value = os.environ.get(WORKSPACE_ENV)
+        if not value:
+            return {}
+        path = Path(value)
+    config = json.loads(path.read_text())
+    if not isinstance(config, dict):
+        raise ValueError(f"{path}: expected an object with `settings` and `identity`")
+    unknown = sorted(set(config) - {"settings", "identity"})
+    if unknown:
+        raise ValueError(f"{path}: unknown keys {', '.join(unknown)}; expected `settings` and `identity`")
+    for name, value in (config.get("settings") or {}).items():
+        if not name.endswith(".json") or not isinstance(value, dict):
+            raise ValueError(f"{path}: settings.{name} must be a JSON settings file name mapped to an object")
+    identity = config.get("identity")
+    if identity is not None:
+        if not isinstance(identity, dict) or not isinstance(identity.get("accent"), str):
+            raise ValueError(f"{path}: identity needs `accent`, a CSS color such as \"#3366cc\"")
+        stripe = identity.get("stripe", [identity["accent"]])
+        if not (isinstance(stripe, list) and stripe and all(isinstance(c, str) for c in stripe)):
+            raise ValueError(f"{path}: identity.stripe must be a non-empty list of CSS colors")
+    return config
+
+
+def declared_settings(config: dict) -> dict[str, dict]:
+    """Settings file -> the values the workspace declares, with `identity` expanded into appearance.json."""
+    settings = {name: value for name, value in (config.get("settings") or {}).items()}
+    identity = config.get("identity")
+    if identity:
+        settings["appearance.json"] = overlay(
+            {"accentColor": identity["accent"], "enabledCssSnippets": [IDENTITY_SNIPPET]},
+            settings.get("appearance.json", {}))
+    return settings
+
+
+def identity_css(config: dict) -> str | None:
+    """The identity snippet: the stripe's colors in equal bands, 3px tall, above everything, never clickable."""
+    identity = config.get("identity")
+    if not identity:
+        return None
+    colors = identity.get("stripe") or [identity["accent"]]
+    width = 100 / len(colors)
+    stops = ", ".join(f"{c} {i * width:g}% {(i + 1) * width:g}%" for i, c in enumerate(colors))
+    return (f"{IDENTITY_HEADER}\n"
+            "body::before {\n"
+            "  content: \"\";\n"
+            "  position: fixed;\n"
+            "  inset: 0 0 auto 0;\n"
+            "  height: 3px;\n"
+            f"  background: linear-gradient(to right, {stops});\n"
+            "  z-index: 1000;\n"
+            "  pointer-events: none;\n"
+            "}\n")
+
+
+def overlay(base, patch):
+    """A declared value over another: objects key by key, lists of plain values gain the patch's items, else patch."""
+    if isinstance(base, dict) and isinstance(patch, dict):
+        return {**base, **{k: overlay(base.get(k, MISSING), v) for k, v in patch.items()}}
+    if (isinstance(base, list) and isinstance(patch, list)
+            and all(not isinstance(v, (dict, list)) for v in [*base, *patch])):
+        return base + [v for v in patch if v not in base]
+    return patch
 
 
 def vault_folder(root: Path) -> str:

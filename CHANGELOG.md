@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.6.0 - 2026-11-10
+
+A workspace declares its deliberate Obsidian deviations in its flake, so workspaces share the seeded settings
+and differ only where they say so, including a visual identity that tells vaults apart.
+
+### Added
+
+- `obsidian` argument to `nix/workspace.nix`: `settings` (settings file -> keys overlaid on the seed) and
+  `identity` (`accent`, and `stripe`, the colors of a band across the top of the window)
+  ([declared deviations](docs/obsidian.md#declared-deviations)). It reaches `check-obsidian` and
+  `upgrade-obsidian` as `$OBSIDIAN_WORKSPACE`.
+- `upgrade-obsidian` applies the declarations after the merge (`declare` lines), and renders the
+  `vault-identity` CSS snippet from `identity`, or removes it when `identity` is gone.
+
+### Changed
+
+- `check-obsidian` compares the vault with the seed plus the declarations, and checks the identity snippet. A file
+  that matches is `same (declared: ...)`; `--strict` now fails only on undeclared drift.
+
+### Upgrading
+
+1. `just upgrade notebook-conventions@v0.6.0`. Nothing changes until the workspace declares something.
+2. Run `just check-obsidian`. For each `changed` file, decide: a deliberate choice goes into `obsidian.settings`
+   in the flake's `nix/workspace.nix` call (copy the vault's value); anything else is drift to undo by copying
+   the seed's value from `.scions/notebook-conventions/seed/common/notebook/.obsidian/`.
+3. Optionally add `obsidian.identity = { accent = "<color>"; };` to tell this vault apart from others.
+4. Rebuild the tools (`kit_run`), quit Obsidian, run `just upgrade-obsidian`, and commit the flake and
+   `notebook/.obsidian/`, including `snippets/vault-identity.css` if an identity is declared. Done when
+   `just check-obsidian --strict` exits 0.
+
 ## v0.5.0 - 2026-11-09
 
 The seed carries Obsidian's appearance settings, so every workspace gets the same look through `just upgrade`.

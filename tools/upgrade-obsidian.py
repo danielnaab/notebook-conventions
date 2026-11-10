@@ -10,6 +10,11 @@ plugins (docs/obsidian-plugins.json) that the vault enables: each one missing or
 release's `main.js`, `manifest.json`, and `styles.css`, and its `data.json` is left alone. A plugin the vault's
 `community-plugins.json` does not list is never installed, so removing it there opts the workspace out.
 
+A workspace declares its deliberate deviations in its flake (the `obsidian` argument to nix/workspace.nix), which
+reaches this tool as $OBSIDIAN_WORKSPACE. They are applied last, so they win over both the kit and the vault:
+`settings` overlays the named files, and `identity` sets the accent color and renders and enables the
+`vault-identity` CSS snippet, a thin stripe across the top of the window. Removing the identity removes the snippet.
+
 Run it from the workspace root on the upgrade branch, after `just upgrade`, with Obsidian closed:
 Obsidian rewrites its settings files while it runs. It refuses to write while Obsidian runs, and reports and exits 0
 when there is nothing to write. `--base` defaults to HEAD, which still holds the old scion
@@ -106,21 +111,64 @@ def write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
 
 
+def changed_paths(before, after, path: str = "") -> list[str]:
+    """The keys (by path) where a declared overlay changed a value."""
+    if before == after:
+        return []
+    if isinstance(before, dict) and isinstance(after, dict):
+        return [p for k in after for p in changed_paths(before.get(k, obs.MISSING), after[k],
+                                                        f"{path}.{k}" if path else k)]
+    return [path or "(file)"]
+
+
+def upgrade_identity(settings: Path, config: dict, dry_run: bool) -> list[str]:
+    """Render, rewrite, or remove the identity snippet; a removed one also leaves enabledCssSnippets."""
+    css = obs.identity_css(config)
+    path = settings / "snippets" / f"{obs.IDENTITY_SNIPPET}.css"
+    name = f"snippets/{obs.IDENTITY_SNIPPET}.css"
+    if css is not None:
+        if path.is_file() and path.read_text() == css:
+            return []
+        verb = "update  " if path.is_file() else "create  "
+        if not dry_run:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(css)
+        return [f"{verb} {name}"]
+    if not path.is_file() or not path.read_text().startswith(obs.IDENTITY_HEADER):
+        return []
+    lines = [f"remove   {name}"]
+    appearance = settings / "appearance.json"
+    value = json.loads(appearance.read_text()) if appearance.is_file() else {}
+    enabled = value.get("enabledCssSnippets")
+    if isinstance(enabled, list) and obs.IDENTITY_SNIPPET in enabled:
+        value["enabledCssSnippets"] = [v for v in enabled if v != obs.IDENTITY_SNIPPET]
+        lines.append(f"update   appearance.json: enabledCssSnippets -{obs.IDENTITY_SNIPPET}")
+        if not dry_run:
+            write_json(appearance, value)
+    if not dry_run:
+        path.unlink()
+    return lines
+
+
 def upgrade(root: Path, base: str | None, dry_run: bool, plugins: bool = True,
-            assets: Path | None = None) -> dict:
+            assets: Path | None = None, config: dict | None = None) -> dict:
     settings = obs.settings_dir(root)
-    report = {"created": [], "updated": {}, "kept": {}, "unchanged": [], "gitignore": [], "plugins": [],
-              "manual": []}
+    config = config or {}
+    declared = obs.declared_settings(config)
+    report = {"created": [], "updated": {}, "kept": {}, "declared": {}, "unchanged": [], "identity": [],
+              "gitignore": [], "plugins": [], "manual": []}
     # The vault's plugin list after the merge, which decides which pinned plugins to install.
     enabled: list = []
     have_base = base is not None and obs.git_ref_exists(root, base)
     if base is not None and not have_base:
         report["manual"].append(f"base {base!r} is not a commit here: merged without an old seed")
     same_base = []
-    for name in obs.seeded_files():
-        new = json.loads((obs.SEEDED / name).read_text())
+    seeded = obs.seeded_files()
+    for name in sorted({*seeded, *declared}):
+        new = json.loads((obs.SEEDED / name).read_text()) if name in seeded else obs.MISSING
         path = settings / name
         if not path.is_file():
+            new = obs.overlay({} if new is obs.MISSING else new, declared.get(name, {}))
             report["created"].append(name)
             if name == "community-plugins.json":
                 enabled = new
@@ -132,10 +180,20 @@ def upgrade(root: Path, base: str | None, dry_run: bool, plugins: bool = True,
         except json.JSONDecodeError as error:
             report["manual"].append(f"{name}: not valid JSON ({error}); fix it, then run again")
             continue
-        old = obs.base_seed(root, base, name) if have_base else obs.MISSING
-        if old == new and local != new:
+        if new is obs.MISSING:  # a file only the workspace declares
+            merged, applied, kept = local, [], []
+        else:
+            old = obs.base_seed(root, base, name) if have_base else obs.MISSING
+            merged, applied, kept = obs.merge(old, new, local)
+        if name in declared:
+            overlaid = obs.overlay(merged, declared[name])
+            if overlaid != merged:
+                report["declared"][name] = changed_paths(merged, overlaid)
+                kept = [k for k in kept if k not in report["declared"][name]]
+            merged = overlaid
+        if new is not obs.MISSING and old == new and merged != (
+                obs.overlay(new, declared[name]) if name in declared else new):
             same_base.append(name)
-        merged, applied, kept = obs.merge(old, new, local)
         if name == "community-plugins.json" and isinstance(merged, list):
             enabled = merged
         if kept:
@@ -144,7 +202,8 @@ def upgrade(root: Path, base: str | None, dry_run: bool, plugins: bool = True,
             if not kept:
                 report["unchanged"].append(name)
             continue
-        report["updated"][name] = applied
+        if applied:
+            report["updated"][name] = applied
         if not dry_run:
             write_json(path, merged)
     if same_base:
@@ -152,6 +211,7 @@ def upgrade(root: Path, base: str | None, dry_run: bool, plugins: bool = True,
             f"{', '.join(same_base)}: differ from the kit, but the seed at {base} is the same as the current one, so "
             "nothing was merged. If the upgrade is already committed, run again with --base <the commit before it>; "
             "otherwise the difference is a local choice")
+    report["identity"] = upgrade_identity(settings, config, dry_run)
     added, manual = upgrade_gitignore(root, obs.vault_folder(root), dry_run)
     report["gitignore"], report["manual"] = added, report["manual"] + manual
     if plugins:
@@ -177,10 +237,15 @@ def main() -> int:
     root = args.root.resolve()
     if not (root / obs.vault_folder(root)).is_dir():
         sys.exit(f"upgrade-obsidian: no {obs.vault_folder(root)}/ here; run from the workspace root")
-    options = {"plugins": not args.no_plugins, "assets": obs.plugin_assets()}
+    try:
+        config = obs.workspace_config()
+    except (OSError, ValueError) as error:
+        sys.exit(f"upgrade-obsidian: the workspace's obsidian declaration: {error}")
+    options = {"plugins": not args.no_plugins, "assets": obs.plugin_assets(), "config": config}
     # Plan first: a running Obsidian matters only if something would be written (settings, .gitignore, plugins).
     report = upgrade(root, args.base, dry_run=True, **options)
-    pending = report["created"] or report["updated"] or report["gitignore"] or report["plugins"]
+    pending = (report["created"] or report["updated"] or report["declared"] or report["identity"]
+               or report["gitignore"] or report["plugins"])
     if pending and not args.dry_run:
         if not args.allow_running and obsidian_running():
             sys.exit("upgrade-obsidian: Obsidian is running and rewrites its settings; quit it (or --dry-run, "
@@ -191,6 +256,10 @@ def main() -> int:
         print(f"{verb}create   {name}")
     for name, paths in report["updated"].items():
         print(f"{verb}update   {name}: " + ", ".join(paths))
+    for name, paths in report["declared"].items():
+        print(f"{verb}declare  {name}: " + ", ".join(paths))
+    for line in report["identity"]:
+        print(f"{verb}{line}")
     for name, paths in report["kept"].items():
         print(f"kept       {name}: local value for " + ", ".join(paths))
     for line in report["gitignore"]:

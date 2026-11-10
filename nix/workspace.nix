@@ -11,6 +11,13 @@
 #
 # extraPackages: pkgs -> [ packages ] the workspace adds to the tools package (and so to the dev shell).
 #
+# obsidian: the workspace's deliberate deviations from the kit's seeded Obsidian settings, which check-obsidian
+# expects and upgrade-obsidian applies (docs/obsidian.md#declared-deviations):
+#   obsidian = {
+#     settings."app.json".openBehavior = "file";    # settings file -> keys overlaid on the seed
+#     identity = { accent = "#3366cc"; stripe = [ "#3366cc" "#cc6633" ]; };  # accent color and a window stripe
+#   };
+#
 # flakeDir: where the workspace's flake.nix sits under its top, as given to graft's mkFlake (default `.`). A flake
 # in a subdirectory (`nix/workspace`) keeps the workspace's content out of the Nix store, so its source holds no
 # notes: there is no task check (`just check` runs check-tasks on the working tree instead).
@@ -20,6 +27,7 @@
 , withTasks ? true
 , flakeDir ? "."
 , extraPackages ? (_pkgs: [ ])
+, obsidian ? { }
 }:
 let
   lib = inputs.nixpkgs.lib;
@@ -40,6 +48,11 @@ let
     }) pin.assets) (lib.importJSON ../docs/obsidian-plugins.json).plugins);
   # the flake's source is the workspace only when the flake is at its top
   atTop = lib.elem (lib.removeSuffix "/" flakeDir) [ "." "" ];
+  # The declared deviations as JSON, for the two Obsidian tools; the tools validate the shape.
+  obsidianWorkspace = pkgs:
+    assert lib.assertMsg (lib.all (k: lib.elem k [ "settings" "identity" ]) (lib.attrNames obsidian))
+      "notebook-conventions: obsidian takes only `settings` and `identity`";
+    pkgs.writeText "obsidian-workspace.json" (builtins.toJSON obsidian);
 
   # name -> [ script description needsKbi ]
   tools = {
@@ -64,6 +77,8 @@ let
         export KBI_SRC=${kbiSrc}
       '' + lib.optionalString (name == "upgrade-obsidian") ''
         export OBSIDIAN_PLUGIN_ASSETS=${obsidianPlugins pkgs}
+      '' + lib.optionalString (lib.elem name [ "check-obsidian" "upgrade-obsidian" ] && obsidian != { }) ''
+        export OBSIDIAN_WORKSPACE=${obsidianWorkspace pkgs}
       '' + ''
         exec python ${kit}/tools/${lib.elemAt spec 0} "$@"
       '';

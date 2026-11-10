@@ -105,7 +105,38 @@ old scion until the upgrade is committed), the current seed, and the vault's cop
   seed matches the current one and a file still differs.
 
 A preference meant for every workspace goes into the kit's seed first and is then released. A setting only one
-workspace wants stays in that workspace. The check then lists it as changed, as a reminder.
+workspace wants is declared in that workspace's flake ([declared deviations](#declared-deviations)); one left
+undeclared is listed as changed, as a reminder.
+
+### Declared deviations
+
+A workspace states where its settings deliberately differ from the seed in the `obsidian` argument it passes to
+[`nix/workspace.nix`](../nix/workspace.nix). The base stays in the scion; the deviations are a few lines of Nix the
+workspace owns, so two workspaces on the same kit share everything else.
+
+```nix
+workspace = import "${inputs.notebook-conventions}/nix/workspace.nix" {
+  inherit inputs flakeDir;
+  obsidian = {
+    settings."app.json".openBehavior = "file";   # settings file -> keys overlaid on the seed
+    identity = { accent = "#3366cc"; stripe = [ "#3366cc" "#cc6633" ]; };
+  };
+};
+```
+
+- `settings` maps a settings file under `.obsidian/` to the keys it overrides. Objects overlay key by key; a list
+  of plain values gains the declared items.
+- `identity` tells vaults apart when several are open at once. `accent` sets Obsidian's accent color (links, the
+  active tab, checkboxes). `stripe`, default `[ accent ]`, is the colors of a 3px band across the top of the
+  window, in equal parts, rendered as the `vault-identity` CSS snippet and enabled in `appearance.json`. It covers
+  no controls and takes no clicks.
+- `upgrade-obsidian` applies the declarations last, so they win over both a kit change and a value set in the
+  vault, and reports each as `declare`. Removing `identity` removes the snippet it rendered.
+- `check-obsidian` compares the vault with the seed plus the declarations. A file that matches is `same` and
+  names the declared keys; anything else is still `changed`, so `--strict` means undeclared drift.
+- The Nix wiring writes the declaration to a JSON file and passes it to both tools as `$OBSIDIAN_WORKSPACE`.
+  After changing it, rebuild the tools (the workspace's `kit_run`), then run `just upgrade-obsidian` with
+  Obsidian closed.
 
 ### Moving the vault
 
@@ -153,4 +184,5 @@ flake is in a subdirectory puts the tools on `PATH`
 - [Pinned plugin releases](obsidian-plugins.json), checked against the GitHub release assets
 - [Seed Obsidian settings](../seed/common/notebook/.obsidian/app.json)
 - [Settings drift check](../tools/check-obsidian.py) and [settings upgrade](../tools/upgrade-obsidian.py)
+- [Workspace flake wiring](../nix/workspace.nix), which passes the declared deviations to both
 - [Pre-commit hook](../tools/hooks/pre-commit)

@@ -390,3 +390,91 @@ class InstallPluginsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DeclaredDeviationsTest(unittest.TestCase):
+    """The workspace's `obsidian` declaration (nix/workspace.nix), passed to the tools as JSON."""
+
+    CONFIG = {"settings": {"app.json": {"openBehavior": "file"}},
+              "identity": {"accent": "#3366cc", "stripe": ["#3366cc", "#cc6633"]}}
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.settings = self.root / "notebook/.obsidian"
+        shutil.copytree(SEEDED, self.settings)
+        shutil.copy2(KIT / "seed/common/.gitignore", self.root / ".gitignore")
+        shutil.copytree(SEEDED, self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian")
+        git(self.root, "init", "-q", "-b", "main")
+        git(self.root, "add", "-A")
+        git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "seed")
+        self.declare(self.CONFIG)
+
+    def declare(self, config):
+        self.config_path = self.root / "obsidian-workspace.json"
+        self.config_path.write_text(json.dumps(config))
+
+
+    def tool(self, script, *args, config=True):
+        env = {k: v for k, v in os.environ.items() if k not in (obs.WORKSPACE_ENV, obs.PLUGIN_ASSETS_ENV)}
+        if config:
+            env[obs.WORKSPACE_ENV] = str(self.config_path)
+        extra = ["--allow-running", "--no-plugins"] if script == "upgrade-obsidian" else []
+        return subprocess.run([sys.executable, str(KIT / f"tools/{script}.py"), "--root", str(self.root), *extra,
+                               *args], capture_output=True, text=True, env=env)
+
+    def test_upgrade_applies_declarations_and_check_then_passes_strict(self):
+        self.assertEqual(1, self.tool("check-obsidian", "--strict").returncode)
+        proc = self.tool("upgrade-obsidian")
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertIn("declare  app.json: openBehavior", proc.stdout)
+        self.assertIn("declare  appearance.json: accentColor, enabledCssSnippets", proc.stdout)
+        self.assertIn("create   snippets/vault-identity.css", proc.stdout)
+        self.assertNotIn("by hand", proc.stdout)
+        appearance = json.loads((self.settings / "appearance.json").read_text())
+        self.assertEqual("#3366cc", appearance["accentColor"])
+        self.assertEqual(["vault-identity"], appearance["enabledCssSnippets"])
+        css = (self.settings / "snippets/vault-identity.css").read_text()
+        self.assertIn("linear-gradient(to right, #3366cc 0% 50%, #cc6633 50% 100%)", css)
+        check = self.tool("check-obsidian", "--strict")
+        self.assertEqual(0, check.returncode, check.stdout)
+        self.assertIn("same     app.json  (declared: openBehavior)", check.stdout)
+        second = self.tool("upgrade-obsidian").stdout
+        self.assertNotIn("declare", second)
+        self.assertNotIn("create", second)
+
+    def test_declarations_win_over_a_local_value(self):
+        app = json.loads((self.settings / "app.json").read_text())
+        (self.settings / "app.json").write_text(json.dumps({**app, "openBehavior": "daily-ish"}))
+        self.tool("upgrade-obsidian")
+        self.assertEqual("file", json.loads((self.settings / "app.json").read_text())["openBehavior"])
+
+    def test_undeclared_drift_still_shows_as_changed(self):
+        self.tool("upgrade-obsidian")
+        hotkeys = self.settings / "hotkeys.json"
+        hotkeys.write_text(json.dumps({**json.loads(hotkeys.read_text()), "local:command": []}))
+        check = self.tool("check-obsidian", "--strict")
+        self.assertEqual(1, check.returncode)
+        self.assertIn("changed  hotkeys.json", check.stdout)
+
+    def test_removing_the_identity_removes_its_snippet(self):
+        self.tool("upgrade-obsidian")
+        self.declare({"settings": self.CONFIG["settings"]})
+        self.assertIn("stale", self.tool("check-obsidian").stdout)
+        proc = self.tool("upgrade-obsidian")
+        self.assertIn("remove   snippets/vault-identity.css", proc.stdout)
+        self.assertFalse((self.settings / "snippets/vault-identity.css").exists())
+        appearance = json.loads((self.settings / "appearance.json").read_text())
+        self.assertEqual([], appearance["enabledCssSnippets"])
+
+    def test_without_a_declaration_the_tools_behave_as_before(self):
+        self.assertEqual(0, self.tool("check-obsidian", "--strict", config=False).returncode)
+        self.assertNotIn("declare", self.tool("upgrade-obsidian", config=False).stdout)
+
+    def test_invalid_declarations_are_refused(self):
+        for config in ({"colour": "#000"}, {"identity": {"stripe": ["#000"]}}, {"settings": {"app": {}}}):
+            self.declare(config)
+            proc = self.tool("check-obsidian")
+            self.assertNotEqual(0, proc.returncode, config)
+            self.assertIn("obsidian declaration", proc.stderr)
