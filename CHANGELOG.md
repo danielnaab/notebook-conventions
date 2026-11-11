@@ -35,11 +35,14 @@ one in a subdirectory such as `nix/workspace/` or `nix/agent-tools/`):
    `nix run path:$PWD/nix/<dir>#graft` for a flake in a subdirectory. `.scions/notebook-conventions/` and
    `.scions/meta-knowledge-base/` become `.scions/notebook-kit/` and `.scions/knowledge-base-kit/`.
 4. `justfile`: `import ".scions/notebook-kit/tools/kit.just"`.
-5. Replace `.scions/notebook-conventions/` with `.scions/notebook-kit/`, and `.scions/meta-knowledge-base/` with
-   `.scions/knowledge-base-kit/`, everywhere outside `.scions/`: AGENTS.md, docs, `.pi/settings.json`, `.githooks/`.
-   `rg -l 'notebook-conventions|meta-knowledge-base|knowledge-base-integrity' --glob '!.scions'` lists them.
+5. Replace `notebook-conventions` with `notebook-kit`, and `.scions/meta-knowledge-base/` with
+   `.scions/knowledge-base-kit/`, in the workspace's own files: AGENTS.md, README, docs, `.pi/settings.json` and
+   `.githooks/pre-commit` (a missed hook path breaks every commit). This lists them, hidden files included:
+   `rg -l --hidden 'notebook-conventions|meta-knowledge-base' --glob '!.scions' --glob '!.git' --glob '!notebook/**'`.
+   Leave dated records and logs as written; only links break, and the check in step 7 finds any.
 6. `knowledge-base.yaml`: `apiVersion: kb/v1`; the import paths from step 5; `precedence: domain-over-imports`.
-7. `just upgrade-obsidian`, then `just check`. Commit the flake, `flake.lock`, `.scions/` and the edits together.
+7. `just upgrade-obsidian` (it re-renders `vault-identity.css`, whose header now names notebook-kit), then
+   `just check`. Commit the flake, `flake.lock`, `.scions/` and the edits together.
 
 ## v0.7.0 - 2026-11-11
 
