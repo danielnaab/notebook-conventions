@@ -2,4 +2,4 @@
 # Runs the pinned kit's pre-commit hook. graft does not keep the executable bit on files in .scions/,
 # so git cannot run that hook directly; this small wrapper is owned by the workspace.
 # Enable once per clone: git config core.hooksPath .githooks
-exec sh "$(git rev-parse --show-toplevel)/.scions/notebook-conventions/tools/hooks/pre-commit" "$@"
+exec sh "$(git rev-parse --show-toplevel)/.scions/notebook-kit/tools/hooks/pre-commit" "$@"

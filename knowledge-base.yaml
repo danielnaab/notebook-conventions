@@ -1,5 +1,5 @@
 apiVersion: kb/v1
-name: notebook-conventions
+name: notebook-kit
 description: "Conventions, tools, skills, and a starter seed for Markdown work-memory workspaces."
 
 entrypoints:
@@ -27,7 +27,7 @@ sources:
       note: "Orientation."
 
 rules:
-  # Scopes for knowledge-base-integrity. seed/ holds placeholders and links that only resolve inside a
+  # Scopes for knowledge-base-kit's checker. seed/ holds placeholders and links that only resolve inside a
   # workspace; tests/test_seed.py builds one and runs the checks there.
   checks:
     links:

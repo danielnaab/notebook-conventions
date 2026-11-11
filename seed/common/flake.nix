@@ -6,11 +6,11 @@
     nixpkgs.follows = "graft/nixpkgs";
     # The conventions and the checker; the checker is read from this same pin (its src/).
     knowledge-base-kit = {
-      url = "github:danielnaab/knowledge-base-kit/kit-v2";
+      url = "github:danielnaab/knowledge-base-kit/v2.0.0";
       flake = false;
     };
-    notebook-conventions = {
-      url = "github:danielnaab/notebook-conventions/v0.7.0";
+    notebook-kit = {
+      url = "github:danielnaab/notebook-kit/v1.0.0";
       flake = false;
     };
   };
@@ -20,6 +20,6 @@
     dir = ".scions";
     # The kit's flake wiring (dev shell, check apps, task check), read from the pin itself so it is
     # there before the first `nix run .#graft`.
-    outputs = import "${inputs.notebook-conventions}/nix/workspace.nix" { inherit inputs; };
+    outputs = import "${inputs.notebook-kit}/nix/workspace.nix" { inherit inputs; };
   };
 }

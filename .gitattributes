@@ -1,4 +1,4 @@
-# What graft exports to consumers (.scions/notebook-conventions): reference content, tools, nix
+# What graft exports to consumers (.scions/notebook-kit): reference content, tools, nix
 # wiring, and the seed. Everything below is development of this repository.
 /.scions export-ignore
 /.gitattributes export-ignore

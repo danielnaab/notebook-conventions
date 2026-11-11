@@ -1,6 +1,6 @@
 """Shared helpers for the vault tools: the bundle, note frontmatter, links, and index generation.
 
-The bundle and `.okfignore` come from knowledge-base-integrity (KBI_SRC), so the kit and the checker agree
+The bundle and `.okfignore` come from knowledge-base-kit's checker (KBI_SRC), so the kit and the checker agree
 on what is in the bundle. Everything here is read-only except `write_indexes` and `rewrite_links`.
 """
 
@@ -57,10 +57,10 @@ FRONTMATTER = re.compile(r"\A---[ \t]*\n(.*?)^---[ \t]*$\n?", re.S | re.M)
 
 
 def load_kbi():
-    """Import knowledge-base-integrity's okf module from KBI_SRC (set by the nix apps)."""
+    """Import knowledge-base-kit's okf module from KBI_SRC (set by the nix apps)."""
     src = os.environ.get("KBI_SRC")
     if not src:
-        sys.exit("set KBI_SRC to knowledge-base-integrity's src/ (use the nix run apps)")
+        sys.exit("set KBI_SRC to knowledge-base-kit's src/ (use the nix run apps)")
     if src not in sys.path:
         sys.path.insert(0, src)
     from tool_cli import config, okf  # noqa: PLC0415

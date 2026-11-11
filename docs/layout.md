@@ -21,7 +21,7 @@ The top level of the vault names a lifecycle; the domain is one level down. Writ
 | `wiki/` | Maintained knowledge with lifecycle status | `wiki/people/`, topic pages |
 | `templates/` | Note structures, excluded from the bundle | see [Templates](#templates) |
 
-- These are the meta-KB [temporal layers](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/temporal-layers.md):
+- These are knowledge-base-kit's [temporal layers](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/temporal-layers.md):
   raw sources, historical records, tracking, and durable knowledge. Raw sources and records carry no lifecycle
   `status`; their path marks them.
 - A session is one file. Artifacts it owns (scripts, data) go in a sibling folder with the same name:
@@ -93,7 +93,7 @@ Every note in the bundle is OKF frontmatter plus a Markdown body.
 
 - [OKF v0.2 specification](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
 - [OKF issue #58: excluding non-concept Markdown files](https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/58)
-- [Meta-KB temporal layers policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/temporal-layers.md)
-- [Meta-KB provenance policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/provenance.md)
-- [Meta-KB authority policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/authority.md)
-- [Meta-KB linking policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/linking.md)
+- [knowledge-base-kit temporal layers policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/temporal-layers.md)
+- [knowledge-base-kit provenance policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/provenance.md)
+- [knowledge-base-kit authority policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/authority.md)
+- [knowledge-base-kit linking policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/linking.md)

@@ -1,7 +1,7 @@
 # Shared flake wiring for Markdown work-memory workspaces.
 #
 # In a workspace's flake.nix (see seed/common/flake.nix):
-#   outputs = import "${inputs.notebook-conventions}/nix/workspace.nix" { inherit inputs; };
+#   outputs = import "${inputs.notebook-kit}/nix/workspace.nix" { inherit inputs; };
 #
 # Needs the inputs `nixpkgs` and `knowledge-base-kit` (flake = false; its src/ is the checker), and `self` (for the task check).
 #
@@ -51,7 +51,7 @@ let
   # The declared deviations as JSON, for the two Obsidian tools; the tools validate the shape.
   obsidianWorkspace = pkgs:
     assert lib.assertMsg (lib.all (k: lib.elem k [ "settings" "identity" ]) (lib.attrNames obsidian))
-      "notebook-conventions: obsidian takes only `settings` and `identity`";
+      "notebook-kit: obsidian takes only `settings` and `identity`";
     pkgs.writeText "obsidian-workspace.json" (builtins.toJSON obsidian);
 
   # name -> [ script description needsKbi ]

@@ -6,7 +6,7 @@
     nixpkgs.follows = "graft/nixpkgs";
     # The conventions and the checker: grafted to .scions/, and the checker read from the same pin.
     knowledge-base-kit = {
-      url = "github:danielnaab/knowledge-base-kit/kit-v2";
+      url = "github:danielnaab/knowledge-base-kit/v2.0.0";
       flake = false;
     };
   };

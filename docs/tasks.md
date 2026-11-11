@@ -23,7 +23,7 @@ synthesis. One agent or person (the orchestrator) maintains current state; worke
 
 ## Metadata
 
-Task `status` is its own vocabulary, a deliberate deviation from the meta-KB lifecycle statuses (see [conformance](conformance.md)).
+Task `status` is its own vocabulary, a deliberate deviation from knowledge-base-kit's lifecycle statuses (see [conformance](conformance.md)).
 
 | Required field | Meaning |
 | --- | --- |
@@ -83,6 +83,6 @@ and that the generated index is current. It does not prove claims, identify agen
 
 ## Sources
 
-- [Meta-KB temporal layers policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/temporal-layers.md)
+- [knowledge-base-kit temporal layers policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/temporal-layers.md)
 - [Task validator](../tools/check-tasks.py)
 - [Task-record template](../templates/task-record.md)

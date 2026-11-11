@@ -1,13 +1,13 @@
-# notebook-conventions operations menu. A workspace's justfile imports it in place (see seed/common/justfile,
+# notebook-kit operations menu. A workspace's justfile imports it in place (see seed/common/justfile,
 # whose first recipe, `default`, lists this menu: just runs the root justfile's first recipe, never an imported one):
 #
 #   set allow-duplicate-variables   # lets the workspace override kit_run and graft_run below
 #   set allow-duplicate-recipes     # lets the workspace define check-local (and override any recipe)
-#   import ".scions/notebook-conventions/tools/kit.just"
+#   import ".scions/notebook-kit/tools/kit.just"
 #
 # `just` lists every recipe by group. Recipes run from the workspace root, so paths are repository-relative,
 # and flags pass straight through: `just index --check`, `just move OLD NEW --dry-run`.
-# Docs: .scions/notebook-conventions/docs/adoption.md#run-operations-with-just
+# Docs: .scions/notebook-kit/docs/adoption.md#run-operations-with-just
 
 # How a kit tool runs: `{}` becomes the tool's name (check-kb, index, ...), and the recipe's arguments follow.
 # Override with the KIT_RUN environment variable or `kit_run := "..."` in the workspace justfile, e.g.
@@ -32,7 +32,7 @@ check-local:
 graft-check *args:
     {{graft_run}} check "$@"
 
-# Check links, lifecycle status, and Sources with knowledge-base-integrity
+# Check links, lifecycle status, and Sources with knowledge-base-kit's checker
 [group('check')]
 [positional-arguments]
 check-kb *args:
@@ -80,7 +80,7 @@ outdated *args:
 changelog *names:
     {{graft_run}} changelog "$@"
 
-# Move scion pins (e.g. notebook-conventions@vX.Y.Z), rebuild .scions/, apply the kit's Obsidian settings and
+# Move scion pins (e.g. notebook-kit@vX.Y.Z), rebuild .scions/, apply the kit's Obsidian settings and
 # plugins (upgrade-obsidian), then list the next steps
 [group('deps')]
 [positional-arguments]

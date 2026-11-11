@@ -5,7 +5,7 @@
 set allow-duplicate-variables
 set allow-duplicate-recipes
 
-import ".scions/notebook-conventions/tools/kit.just"
+import ".scions/notebook-kit/tools/kit.just"
 
 # `just` with no recipe runs the first one in this file: list the operations.
 [private]

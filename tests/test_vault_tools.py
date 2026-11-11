@@ -1,6 +1,6 @@
 """Tests for the vault tools: index generation, moving notes, and converting a v0.1 workspace.
 
-Fixtures are synthetic. The bundle and .okfignore come from knowledge-base-integrity (KBI_SRC; skipped if unset).
+Fixtures are synthetic. The bundle and .okfignore come from knowledge-base-kit's checker (KBI_SRC; skipped if unset).
 """
 
 import json

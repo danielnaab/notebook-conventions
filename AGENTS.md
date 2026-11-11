@@ -1,4 +1,4 @@
-# notebook-conventions — agent entrypoint
+# notebook-kit — agent entrypoint
 
 Public, generic conventions, tools, skills, and a copy-once seed for Markdown work-memory workspaces. Workspaces
 pin it as a graft scion. Read [README.md](README.md), then [KB configuration](knowledge-base.yaml).
@@ -19,7 +19,7 @@ pin it as a graft scion. Read [README.md](README.md), then [KB configuration](kn
   run it stably.
 - **The `just` menu is an interface.** Workspaces and their agents call `tools/kit.just` recipes by name; renaming
   or removing a recipe, or changing `kit_run`/`graft_run`, is a breaking change with Upgrading steps.
-- **Docs follow the meta-KB:** `status` frontmatter, `## Sources`, real relative links. Keep policy-style text short.
+- **Docs follow knowledge-base-kit:** `status` frontmatter, `## Sources`, real relative links. Keep policy-style text short.
 - **Verify:** `nix flake check` runs the tests (tool tests, a workspace built from `seed/`, and the hygiene scan);
   `nix run .#check-kb` checks links, status, and Sources here. Tests need no network.
 - `.scions/` is graft output; never edit it. Upgrade inputs with `nix run .#graft upgrade`.

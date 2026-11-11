@@ -1,4 +1,4 @@
-# notebook-conventions
+# notebook-kit
 
 Conventions, tools, agent skills, and a starter seed for Markdown work-memory workspaces: a Git repository of
 notes that people browse in Obsidian and agents maintain. The notes folder is the Obsidian vault and an
@@ -35,7 +35,7 @@ dependency upgrades ([run operations with just](docs/adoption.md#run-operations-
 - **Reference over copy.** What a workspace can read in place stays in the scion, so fixes arrive with an upgrade.
 - **Small seed.** Seeded files are owned by the workspace; changes reach them through the changelog, not a merge tool.
 - **Evidence-driven.** Structure is added for observed, repeated pain, following the
-  [meta-KB](https://github.com/danielnaab/meta-knowledge-base/tree/v1.1.0).
+  [knowledge-base-kit](https://github.com/danielnaab/knowledge-base-kit/tree/v2.0.0).
 
 ## Develop
 
@@ -54,5 +54,4 @@ The license file is exported with the scion, so every workspace that pins the ki
 ## Sources
 
 - [Graft](https://github.com/danielnaab/graft)
-- [meta-knowledge-base](https://github.com/danielnaab/meta-knowledge-base)
-- [knowledge-base-integrity](https://github.com/danielnaab/knowledge-base-integrity)
+- [knowledge-base-kit](https://github.com/danielnaab/knowledge-base-kit): the conventions and the checker

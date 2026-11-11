@@ -9,7 +9,7 @@ Markdown in Obsidian.
   resuming a thread, or reviewing TODOs; surface only relevant actions and changed blockers.
 - Read [boundaries](docs/boundaries.md) before using any data, account, tool, or service. Boundaries override
   conflicting guidance elsewhere.
-- Conventions are the pinned [notebook-conventions](.scions/notebook-conventions/docs/README.md) kit, extended by
+- Conventions are the pinned [notebook-kit](.scions/notebook-kit/docs/README.md) kit, extended by
   [local conventions](docs/conventions.md), which take precedence. The kit extends the pinned
   [knowledge-base-kit guidance](.scions/knowledge-base-kit/README.md); read [KB configuration](knowledge-base.yaml) before editing.
 
@@ -25,12 +25,12 @@ Markdown in Obsidian.
 
 ## Work memory
 
-- Choose the smallest useful record under the kit's [logging levels](.scions/notebook-conventions/docs/workflow.md#logging-levels):
+- Choose the smallest useful record under the kit's [logging levels](.scions/notebook-kit/docs/workflow.md#logging-levels):
   no log, daily-only, or session + daily. Decide by future usefulness, not length or tool count.
-- `notebook/` is the vault and an OKF bundle laid out by lifecycle (kit [layout](.scions/notebook-conventions/docs/layout.md)):
+- `notebook/` is the vault and an OKF bundle laid out by lifecycle (kit [layout](.scions/notebook-kit/docs/layout.md)):
   every note has a `type`; links are relative Markdown links that stay inside `notebook/`.
 - Task records in `notebook/tasks/` own current state; session records in `notebook/records/sessions/` own reasoning;
-  wiki pages own durable synthesis. Follow the kit's [task workflow](.scions/notebook-conventions/docs/tasks.md).
+  wiki pages own durable synthesis. Follow the kit's [task workflow](.scions/notebook-kit/docs/tasks.md).
 - Run `just` to list operations (checks, note moves and indexes, dependency upgrades); flags pass straight
   through. Move notes with `just move OLD NEW`; regenerate folder indexes with `just index`.
 - Skills `notebook-start` and `notebook-wrap` come from the kit (see `.pi/settings.json`).
@@ -44,6 +44,6 @@ Markdown in Obsidian.
   not enforcement. Ask before changing an `askFirst` path and record the approval in the task, session, daily
   note, or commit message. Unlisted paths get conservative, documentation-only edits.
 - Never edit `.scions/`; it is graft output. Upgrade through graft (see the kit's
-  [adoption guide](.scions/notebook-conventions/docs/adoption.md)).
+  [adoption guide](.scions/notebook-kit/docs/adoption.md)).
 - No publication, pushes, external messages, deployments, or destructive cleanup without explicit authorization.
 - Verify with `just check` (links, status, Sources, task records, indexes, Obsidian settings).

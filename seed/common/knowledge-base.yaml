@@ -12,7 +12,7 @@ imports:
     relationship: foundational
     sync_policy: extend
   - kind: local
-    path: .scions/notebook-conventions
+    path: .scions/notebook-kit
     relationship: foundational
     sync_policy: extend
 

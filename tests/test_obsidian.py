@@ -177,7 +177,7 @@ class UpgradeObsidianTest(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
-        old_seed = self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian"
+        old_seed = self.root / ".scions/notebook-kit/seed/common/notebook/.obsidian"
         shutil.copytree(SEEDED, old_seed)
         for name in self.V020_ADDED:
             (old_seed / name).unlink()
@@ -238,7 +238,7 @@ class UpgradeObsidianTest(unittest.TestCase):
 
     def test_appearance_seed_added_over_a_vault_that_has_its_own(self):
         # v0.5.0 seeds appearance.json; a vault Obsidian already wrote one for keeps its own values.
-        git(self.root, "rm", "-q", ".scions/notebook-conventions/seed/common/notebook/.obsidian/appearance.json")
+        git(self.root, "rm", "-q", ".scions/notebook-kit/seed/common/notebook/.obsidian/appearance.json")
         git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "v0.4.0")
         (self.settings / "appearance.json").write_text(json.dumps({"showRibbon": True, "baseFontSize": 16}))
         proc = self.run_tool()
@@ -249,15 +249,26 @@ class UpgradeObsidianTest(unittest.TestCase):
         self.assertIn("kept       appearance.json: local value for baseFontSize", proc.stdout)
 
     def test_base_seed_from_a_v01_scion_path(self):
-        git(self.root, "mv", ".scions/notebook-conventions/seed/common/notebook/.obsidian",
-            ".scions/notebook-conventions/seed/common/.obsidian")
+        git(self.root, "mv", ".scions/notebook-kit/seed/common/notebook/.obsidian",
+            ".scions/notebook-kit/seed/common/.obsidian")
         git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "v0.1 layout")
         self.run_tool()
         self.assertEqual(0, self.check("--strict").returncode, self.check().stdout)
 
+    def test_base_seed_from_the_scion_under_the_kits_earlier_name(self):
+        # Upgrading from notebook-conventions: the committed base sits under the old scion name.
+        git(self.root, "mv", ".scions/notebook-kit", ".scions/notebook-conventions")
+        git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "v0.7 name")
+        # The workspace removed Linter itself; only with the old seed as the base is that a local choice to keep.
+        (self.settings / "community-plugins.json").write_text(json.dumps(["calendar"]))
+        proc = self.run_tool()
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        plugins = json.loads((self.settings / "community-plugins.json").read_text())
+        self.assertEqual(["calendar", "table-editor-obsidian", "darlal-switcher-plus"], plugins)
+
     def test_an_already_committed_upgrade_asks_for_the_earlier_base(self):
-        shutil.rmtree(self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian")
-        shutil.copytree(SEEDED, self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian")
+        shutil.rmtree(self.root / ".scions/notebook-kit/seed/common/notebook/.obsidian")
+        shutil.copytree(SEEDED, self.root / ".scions/notebook-kit/seed/common/notebook/.obsidian")
         git(self.root, "add", "-A")
         git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "upgrade")
         out = self.run_tool().stdout
@@ -405,7 +416,7 @@ class DeclaredDeviationsTest(unittest.TestCase):
         self.settings = self.root / "notebook/.obsidian"
         shutil.copytree(SEEDED, self.settings)
         shutil.copy2(KIT / "seed/common/.gitignore", self.root / ".gitignore")
-        shutil.copytree(SEEDED, self.root / ".scions/notebook-conventions/seed/common/notebook/.obsidian")
+        shutil.copytree(SEEDED, self.root / ".scions/notebook-kit/seed/common/notebook/.obsidian")
         git(self.root, "init", "-q", "-b", "main")
         git(self.root, "add", "-A")
         git(self.root, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "seed")

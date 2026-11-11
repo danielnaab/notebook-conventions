@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run knowledge-base-integrity's link validator and KB linter on this repository.
+"""Run knowledge-base-kit's link validator and KB linter on this repository.
 
 The tools come from the pinned flake input (KBI_SRC points at its src/); scopes and rules
 come from knowledge-base.yaml (rules.checks). Exit 0 clean, 1 findings, 2 configuration error.
@@ -41,7 +41,7 @@ def run_tool(module: str, src: str, root: Path) -> tuple[int, list[str], str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=".", type=Path)
-    parser.add_argument("--src", default=os.environ.get("KBI_SRC"), help="knowledge-base-integrity src/")
+    parser.add_argument("--src", default=os.environ.get("KBI_SRC"), help="knowledge-base-kit src/")
     args = parser.parse_args()
     if not args.src:
         print("check-kb: set KBI_SRC or pass --src (run it with `just check-kb`)", file=sys.stderr)

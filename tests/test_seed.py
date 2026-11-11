@@ -34,7 +34,7 @@ def build_workspace(root: Path) -> None:
     for profile_or_common in ("profiles/generic", "common"):
         shutil.copytree(KIT / "seed" / profile_or_common, root, dirs_exist_ok=True,
                         copy_function=lambda s, d: None if Path(d).exists() else shutil.copy2(s, d))
-    scion = root / ".scions" / "notebook-conventions"
+    scion = root / ".scions" / "notebook-kit"
     scion.mkdir(parents=True)
     for name in EXPORTED:
         shutil.copytree(KIT / name, scion / name)
@@ -77,7 +77,7 @@ class SeedTest(unittest.TestCase):
 
     def test_seed_pins_the_release_it_ships_in(self):
         newest = re.search(r"^## (v[0-9.]+)", (KIT / "CHANGELOG.md").read_text(), re.M).group(1)
-        self.assertIn(f"notebook-conventions/{newest}\"", (KIT / "seed/common/flake.nix").read_text())
+        self.assertIn(f"notebook-kit/{newest}\"", (KIT / "seed/common/flake.nix").read_text())
 
     def test_seed_pins_the_graft_the_kit_uses(self):
         pin = re.search(r"danielnaab/graft/v[0-9.]+", (KIT / "flake.nix").read_text()).group(0)
@@ -86,7 +86,7 @@ class SeedTest(unittest.TestCase):
     def test_flake_reads_the_wiring_from_the_pinned_kit(self):
         # From the input, not .scions/, so the dev shell and checks exist before the first graft.
         flake = (self.root / "flake.nix").read_text()
-        self.assertIn('import "${inputs.notebook-conventions}/nix/workspace.nix"', flake)
+        self.assertIn('import "${inputs.notebook-kit}/nix/workspace.nix"', flake)
         self.assertEqual("use flake\n", (self.root / ".envrc").read_text())
 
     def test_task_check_passes_on_empty_workspace(self):
@@ -139,7 +139,7 @@ class SeedTest(unittest.TestCase):
         for stub in stubs.iterdir():
             stub.chmod(0o755)
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.root, check=True)
-        subprocess.run(["git", "add", "README.md", ".scions/notebook-conventions/README.md"], cwd=self.root, check=True)
+        subprocess.run(["git", "add", "README.md", ".scions/notebook-kit/README.md"], cwd=self.root, check=True)
         proc = subprocess.run([str(self.root / ".githooks/pre-commit")], cwd=self.root, capture_output=True,
                               text=True, env={**os.environ, "PATH": f"{stubs}{os.pathsep}{os.environ['PATH']}"})
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
@@ -164,7 +164,7 @@ class SeedTest(unittest.TestCase):
         self.assertFalse(called.exists())
 
     def test_skill_files_are_loadable(self):
-        for skill in (self.root / ".scions/notebook-conventions/skills").glob("*/SKILL.md"):
+        for skill in (self.root / ".scions/notebook-kit/skills").glob("*/SKILL.md"):
             head = skill.read_text().split("---")[1]
             self.assertRegex(head, r"(?m)^name: " + skill.parent.name + r"$")
             self.assertRegex(head, r"(?m)^description: .{40,}")
@@ -246,15 +246,15 @@ class JustMenuTest(unittest.TestCase):
         proc = self.just("move", "notebook/a b.md", "notebook/c.md", "--dry-run", cwd=self.root / "notebook")
         self.assertEqual(0, proc.returncode, proc.stderr)
         self.just("index", "--check")
-        self.just("changelog", "notebook-conventions")
+        self.just("changelog", "notebook-kit")
         self.assertEqual([["move", "notebook/a b.md", "notebook/c.md", "--dry-run"], ["index", "--check"],
-                          ["graft", "changelog", "notebook-conventions"]], self.calls())
+                          ["graft", "changelog", "notebook-kit"]], self.calls())
 
     def test_sync_runs_graft_bare_and_upgrade_applies_obsidian_and_lists_next_steps(self):
         self.just("sync")
-        proc = self.just("upgrade", "notebook-conventions@v9.9.9")
+        proc = self.just("upgrade", "notebook-kit@v9.9.9")
         self.assertEqual(0, proc.returncode, proc.stderr)
-        self.assertEqual([["graft"], ["graft", "upgrade", "notebook-conventions@v9.9.9"], ["upgrade-obsidian"]],
+        self.assertEqual([["graft"], ["graft", "upgrade", "notebook-kit@v9.9.9"], ["upgrade-obsidian"]],
                          self.calls())
         for step in ("just changelog", "just migrate", "just check", "Commit"):
             self.assertIn(step, proc.stdout)
@@ -275,7 +275,7 @@ class JustMenuTest(unittest.TestCase):
         kbi = os.environ.get("KBI_SRC")
         if not kbi:
             self.skipTest("KBI_SRC not set")
-        tools = self.root / ".scions/notebook-conventions/tools"
+        tools = self.root / ".scions/notebook-kit/tools"
         # graft check needs the workspace's flake; its own tests cover it
         env = {**os.environ, "KIT_RUN": f"{sys.executable} {tools}/{{}}.py", "GRAFT_RUN": "true",
                "PYTHONDONTWRITEBYTECODE": "1"}

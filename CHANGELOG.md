@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.0.0 - 2026-11-11
+
+**Renamed:** notebook-conventions is now **notebook-kit**: something a workspace takes on and keeps upgrading
+(tools, skills, structure, and the rules they enforce). It also takes the conventions and the checker from one
+repo, [knowledge-base-kit](https://github.com/danielnaab/knowledge-base-kit) v2.0.0 (formerly meta-knowledge-base
+and knowledge-base-integrity). The tools and layout are otherwise unchanged; the major version marks the input
+rename every workspace has to make.
+
+### Changed
+
+- Every reference to the kit's own name and scion path: `.scions/notebook-kit/`, the `notebook-kit` flake input,
+  `import ".scions/notebook-kit/tools/kit.just"`, skill paths, hooks, docs, and the seed.
+- `nix/workspace.nix` reads the checker from the `knowledge-base-kit` input (`${inputs.knowledge-base-kit}/src`);
+  the `knowledge-base-integrity` input is gone. One input per repo: a second one for the same repo (a `git+https`
+  one, say) shares Nix's fetch cache with the first, and one of them gets the wrong tree.
+- The seed's `knowledge-base.yaml`: `apiVersion: kb/v1`, imports `.scions/knowledge-base-kit`,
+  `precedence: domain-over-imports`. Links to the conventions point at knowledge-base-kit v2.0.0.
+- `upgrade-obsidian` also finds the previous seed under `.scions/notebook-conventions/`, so the upgrade that renames
+  the scion still merges Obsidian settings against the right base.
+
+### Upgrading
+
+From v0.6.0 or v0.7.0 (take v0.7.0's step too if coming from v0.6.0). In the workspace's flake (`flake.nix`, or the
+one in a subdirectory such as `nix/workspace/` or `nix/agent-tools/`):
+
+1. Inputs: replace `notebook-conventions` with
+   `notebook-kit = { url = "github:danielnaab/notebook-kit/v1.0.0"; flake = false; };`, and replace both
+   `meta-knowledge-base` and `knowledge-base-integrity` with
+   `knowledge-base-kit = { url = "github:danielnaab/knowledge-base-kit/v2.0.0"; flake = false; };`.
+2. In `outputs`: `import "${inputs.notebook-kit}/nix/workspace.nix"`, and delete `scions = [ ... ]` (every
+   `flake = false` input is now a scion), or drop the two old names from it if it lists others to leave out.
+3. Re-graft with Nix directly, since the justfile still imports the old path: `nix run .#graft`, or
+   `nix run path:$PWD/nix/<dir>#graft` for a flake in a subdirectory. `.scions/notebook-conventions/` and
+   `.scions/meta-knowledge-base/` become `.scions/notebook-kit/` and `.scions/knowledge-base-kit/`.
+4. `justfile`: `import ".scions/notebook-kit/tools/kit.just"`.
+5. Replace `.scions/notebook-conventions/` with `.scions/notebook-kit/`, and `.scions/meta-knowledge-base/` with
+   `.scions/knowledge-base-kit/`, everywhere outside `.scions/`: AGENTS.md, docs, `.pi/settings.json`, `.githooks/`.
+   `rg -l 'notebook-conventions|meta-knowledge-base|knowledge-base-integrity' --glob '!.scions'` lists them.
+6. `knowledge-base.yaml`: `apiVersion: kb/v1`; the import paths from step 5; `precedence: domain-over-imports`.
+7. `just upgrade-obsidian`, then `just check`. Commit the flake, `flake.lock`, `.scions/` and the edits together.
+
 ## v0.7.0 - 2026-11-11
 
 The daily note template carries no guidance comments, so they stop showing in every note and in the app. The rules

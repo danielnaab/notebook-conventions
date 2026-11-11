@@ -115,7 +115,7 @@ A user-initiated information request can merit a compact daily record even when 
 
 ## Sources
 
-- [Meta-KB agent workflow playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/agent-workflow.md)
-- [Meta-KB provenance policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/provenance.md)
-- [Meta-KB lifecycle policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/lifecycle.md)
-- [Meta-KB evolve-a-KB playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/evolve-kb.md)
+- [knowledge-base-kit agent workflow playbook](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/playbooks/agent-workflow.md)
+- [knowledge-base-kit provenance policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/provenance.md)
+- [knowledge-base-kit lifecycle policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/lifecycle.md)
+- [knowledge-base-kit evolve-a-KB playbook](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/playbooks/evolve-kb.md)

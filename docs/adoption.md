@@ -32,7 +32,7 @@ scion, `seed/` files it copies once and then owns, and a local overlay of its ow
    ```sh
    git init -b main && git add -A     # flake.nix must be tracked for nix to read it
    nix run .#graft                    # writes and stages .scions/ (later: just sync)
-   cp .scions/notebook-conventions/templates/*.md notebook/templates/
+   cp .scions/notebook-kit/templates/*.md notebook/templates/
    git config core.hooksPath .githooks   # the seeded wrapper runs the kit's hook
    ```
 
@@ -48,8 +48,8 @@ which does not exist until then.
 
 | Need | How |
 | --- | --- |
-| Conventions | Links into `.scions/notebook-conventions/docs/`; the local `docs/conventions.md` states only local rules. |
-| Agent skills | `.pi/settings.json` lists `../.scions/notebook-conventions/skills` under `skills`. |
+| Conventions | Links into `.scions/notebook-kit/docs/`; the local `docs/conventions.md` states only local rules. |
+| Agent skills | `.pi/settings.json` lists `../.scions/notebook-kit/skills` under `skills`. |
 | Tools and flake wiring | `flake.nix` imports `nix/workspace.nix` from the pinned kit input; apps run its `tools/`: `check-kb`, `check-tasks`, `check-templates`, `check-obsidian`, `upgrade-obsidian`, `index`, `move`, and `convert` (the v0.2 upgrade). |
 | Operations menu | The seeded `justfile` imports `tools/kit.just` from the scion ([run operations with just](#run-operations-with-just)). |
 | Hook | The seeded `.githooks/pre-commit` wrapper runs the kit's hook; `core.hooksPath` is `.githooks`. |
@@ -139,10 +139,9 @@ In `nix/workspace/flake.nix`, tell graft and the kit's wiring where the flake is
 ```nix
   outputs = inputs: inputs.graft.lib.mkFlake {
     inherit inputs;
-    scions = [ "meta-knowledge-base" "notebook-conventions" ];
     flakeDir = "nix/workspace";   # from the repository's top
     dir = ".scions";              # still from the top
-    outputs = import "${inputs.notebook-conventions}/nix/workspace.nix" {
+    outputs = import "${inputs.notebook-kit}/nix/workspace.nix" {
       inherit inputs;
       flakeDir = "nix/workspace";
     };
@@ -192,7 +191,7 @@ find /nix/store -mindepth 1 -maxdepth 1 -cnewer STAMP ! -name .links -print0 | x
 
 ## Local overlay
 
-`docs/conventions.md` is the workspace's own file. It links to the pinned kit docs, records the **Meta-KB
+`docs/conventions.md` is the workspace's own file. It links to the pinned kit docs, records the **knowledge-base-kit
 conformance** table ([conformance](conformance.md)), and lists local deviations and additions. Local agent skills
 add local rules and name the kit skill they extend; they do not copy it.
 
@@ -204,9 +203,9 @@ seeded for the same reason; `just check-obsidian` lists which still match the ki
 ## Upgrade
 
 1. `just outdated` shows the pinned and newest tags.
-2. `just upgrade notebook-conventions@vX.Y.Z` moves the pin and rebuilds `.scions/`, then prints the next steps.
+2. `just upgrade notebook-kit@vX.Y.Z` moves the pin and rebuilds `.scions/`, then prints the next steps.
    Graft takes a new major only when you name it.
-3. Read the kit's changelog between the tags (`just changelog notebook-conventions`, or `CHANGELOG.md` in the
+3. Read the kit's changelog between the tags (`just changelog notebook-kit`, or `CHANGELOG.md` in the
    scion). **Upgrading** says what to change in the workspace's own files, including seeded files that changed.
 4. On the upgrade branch, `just migrate` prints a brief for an agent or a person: what moved, the rules, the
    provider's changelog text, the scion diff, and the workspace lines that name moved paths.
@@ -229,6 +228,6 @@ While the kit is `0.x`, any release may change seeded files, so every release ca
 
 - [Graft README: a flake in a subdirectory](https://github.com/danielnaab/graft/blob/v2.7.0/README.md#a-flake-in-a-subdirectory)
 - [Graft README: upgrades and migrations](https://github.com/danielnaab/graft/blob/v2.7.0/README.md#breaking-changes-and-migrations)
-- [Meta-KB dependency playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/manage-kb-dependencies.md)
+- [knowledge-base-kit dependency playbook](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/playbooks/manage-kb-dependencies.md)
 - [Seed files](../seed/common/)
 - [just manual: imports, settings, and attributes](https://just.systems/man/en/)

@@ -2,16 +2,16 @@
 status: working
 ---
 
-# Conformance with the meta-KB
+# Conformance with knowledge-base-kit
 
-A workspace extends the [meta-knowledge-base](https://github.com/danielnaab/meta-knowledge-base/tree/v1.1.0)
+A workspace extends the [knowledge-base-kit](https://github.com/danielnaab/knowledge-base-kit/tree/v2.0.0)
 (`sync_policy: extend`). Its seven core policies bind unless a documented deviation says otherwise. A workspace
-records this in a short **Meta-KB conformance** section of its local `docs/conventions.md`.
+records this in a short **knowledge-base-kit conformance** section of its local `docs/conventions.md`.
 
 ## What the section contains
 
 - A table of the seven policies with how the workspace applies each.
-- **Inherited versus added:** inherited means the meta-KB policies and the pinned kit; added means local
+- **Inherited versus added:** inherited means knowledge-base-kit's policies and the pinned notebook-kit; added means local
   rules, boundaries, and tooling.
 - **Deliberate deviations,** each with a reason.
 - **Verification:** which checks run and what stays manual.
@@ -35,11 +35,11 @@ records this in a short **Meta-KB conformance** section of its local `docs/conve
 - Task `status` uses its own vocabulary ([tasks](tasks.md#metadata)).
 - `YYYY-MM` folders are time buckets. They keep chronological ledgers browsable and task paths stable.
 
-Records without `status` are no longer a deviation: meta-KB v1.1.0 adds the raw-sources and historical layers.
+Records without `status` are no longer a deviation: knowledge-base-kit's temporal layers include raw sources and historical records (since meta-knowledge-base v1.1.0).
 
 ## Verification
 
-- `just check-kb` runs [knowledge-base-integrity](https://github.com/danielnaab/knowledge-base-integrity)
+- `just check-kb` runs [knowledge-base-kit's checker](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/tools.md)
   over the scopes in `rules.checks`: links and heading anchors, lifecycle `status`, provenance, and OKF
   conformance of the vault (`type` on every note, index shapes, link classes). Links to notes not written yet
   are counted, not failed.
@@ -51,8 +51,8 @@ Records without `status` are no longer a deviation: meta-KB v1.1.0 adds the raw-
 
 ## Sources
 
-- [Meta-KB README](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/README.md)
-- [Meta-KB dependency playbook: the extend policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/manage-kb-dependencies.md)
-- [Meta-KB evolve-a-KB playbook](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/playbooks/evolve-kb.md)
-- [knowledge-base-integrity configuration](https://github.com/danielnaab/knowledge-base-integrity/blob/v0.4.0/docs/README.md#configuring-scan-scopes)
-- [Meta-KB temporal layers policy](https://github.com/danielnaab/meta-knowledge-base/blob/v1.1.0/docs/policies/temporal-layers.md)
+- [knowledge-base-kit README](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/README.md)
+- [knowledge-base-kit dependency playbook: the extend policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/playbooks/manage-kb-dependencies.md)
+- [knowledge-base-kit evolve-a-KB playbook](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/playbooks/evolve-kb.md)
+- [knowledge-base-kit checker configuration](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/tools.md#configuring-scan-scopes)
+- [knowledge-base-kit temporal layers policy](https://github.com/danielnaab/knowledge-base-kit/blob/v2.0.0/docs/policies/temporal-layers.md)

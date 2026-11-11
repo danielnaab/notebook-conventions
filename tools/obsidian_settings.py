@@ -23,11 +23,14 @@ PLUGIN_ASSETS_ENV = "OBSIDIAN_PLUGIN_ASSETS"
 WORKSPACE_ENV = "OBSIDIAN_WORKSPACE"
 # The CSS snippet rendered from `obsidian.identity`: a thin colored stripe across the top of the window.
 IDENTITY_SNIPPET = "vault-identity"
-IDENTITY_HEADER = "/* Rendered by notebook-conventions upgrade-obsidian from obsidian.identity in the workspace's flake. */"
+IDENTITY_HEADER = "/* Rendered by notebook-kit upgrade-obsidian from obsidian.identity in the workspace's flake. */"
 # Obsidian's in-app installer appends this to main.js; the pinned hashes are of the release assets.
 INSTALLER_SUFFIX = b"\n/* nosourcemap */"
-# Where earlier kit versions kept the seeded settings inside the scion: v0.2 and later, then v0.1.
-SCION_SEED_PATHS = (".scions/notebook-conventions/seed/common/notebook/.obsidian",
+# Where kit versions kept the seeded settings inside the scion: v1.0 and later, then the same layouts under the
+# kit's earlier name (v0.2 to v0.7, then v0.1). An upgrade from notebook-conventions reads its old seed by git ref.
+SCION_SEED_PATHS = (".scions/notebook-kit/seed/common/notebook/.obsidian",
+                    ".scions/notebook-kit/seed/common/.obsidian",
+                    ".scions/notebook-conventions/seed/common/notebook/.obsidian",
                     ".scions/notebook-conventions/seed/common/.obsidian")
 
 

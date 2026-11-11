@@ -17,9 +17,9 @@ _Nothing yet._
 | [Templates](notebook/templates/README.md) | Shared note structures for Obsidian and agents. |
 | [Agent instructions](AGENTS.md) | Boundaries, workflow routing, and write rules. |
 | [Boundaries](docs/boundaries.md) | What data, accounts, tools, and services this workspace may use. |
-| [Local conventions](docs/conventions.md) | Local rules and meta-KB conformance, extending the pinned kit. |
+| [Local conventions](docs/conventions.md) | Local rules and knowledge-base-kit conformance, extending the pinned kit. |
 | [KB configuration](knowledge-base.yaml) | Layer and authority declarations and check scopes. |
 
-The shared conventions live in [notebook-conventions](.scions/notebook-conventions/docs/README.md), a pinned graft
+The shared conventions live in [notebook-kit](.scions/notebook-kit/docs/README.md), a pinned graft
 dependency. Daily → session → wiki is the browsing path, but a session is not mandatory for every interaction.
 Folder `index.md` files are generated: `just index`. Run `just` to list every operation.

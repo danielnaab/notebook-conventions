@@ -115,7 +115,7 @@ A workspace states where its settings deliberately differ from the seed in the `
 workspace owns, so two workspaces on the same kit share everything else.
 
 ```nix
-workspace = import "${inputs.notebook-conventions}/nix/workspace.nix" {
+workspace = import "${inputs.notebook-kit}/nix/workspace.nix" {
   inherit inputs flakeDir;
   obsidian = {
     settings."app.json".openBehavior = "file";   # settings file -> keys overlaid on the seed

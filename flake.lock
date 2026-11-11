@@ -31,7 +31,7 @@
       },
       "original": {
         "owner": "danielnaab",
-        "ref": "kit-v2",
+        "ref": "v2.0.0",
         "repo": "knowledge-base-kit",
         "type": "github"
       }
