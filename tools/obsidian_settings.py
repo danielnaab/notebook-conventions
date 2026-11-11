@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import colorsys
 import hashlib
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -21,7 +23,7 @@ PLUGIN_ASSETS_ENV = "OBSIDIAN_PLUGIN_ASSETS"
 # The workspace's declared Obsidian deviations, the `obsidian` argument to nix/workspace.nix as JSON. Unset when
 # the workspace declares none or a tool runs outside the kit's Nix wiring.
 WORKSPACE_ENV = "OBSIDIAN_WORKSPACE"
-# The CSS snippet rendered from `obsidian.identity`: a thin colored stripe across the top of the window.
+# The CSS snippet rendered from `obsidian.identity`: stripe, optional label, and theme-aware accents.
 IDENTITY_SNIPPET = "vault-identity"
 IDENTITY_HEADER = "/* Rendered by notebook-kit upgrade-obsidian from obsidian.identity in the workspace's flake. */"
 # Obsidian's in-app installer appends this to main.js; the pinned hashes are of the release assets.
@@ -77,12 +79,57 @@ def workspace_config(path: Path | None = None) -> dict:
             raise ValueError(f"{path}: settings.{name} must be a JSON settings file name mapped to an object")
     identity = config.get("identity")
     if identity is not None:
-        if not isinstance(identity, dict) or not isinstance(identity.get("accent"), str):
-            raise ValueError(f"{path}: identity needs `accent`, a CSS color such as \"#3366cc\"")
-        stripe = identity.get("stripe", [identity["accent"]])
+        if not isinstance(identity, dict):
+            raise ValueError(f"{path}: identity needs `accent`, a CSS color or a light/dark color object")
+        accent = identity.get("accent")
+        if isinstance(accent, dict):
+            if (set(accent) != {"light", "dark"}
+                    or any(not isinstance(c, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", c)
+                           for c in accent.values())):
+                raise ValueError(f"{path}: identity.accent needs exactly `light` and `dark` #RRGGBB colors")
+        elif not isinstance(accent, str):
+            raise ValueError(f"{path}: identity needs `accent`, a CSS color or a light/dark color object")
+        stripe = identity.get("stripe", [identity_accent(identity)])
         if not (isinstance(stripe, list) and stripe and all(isinstance(c, str) for c in stripe)):
             raise ValueError(f"{path}: identity.stripe must be a non-empty list of CSS colors")
+        if "label" in identity:
+            label = identity["label"]
+            if (not isinstance(label, str) or not label.strip() or not label.isprintable()
+                    or len(label) > 64):
+                raise ValueError(f"{path}: identity.label must be 1–64 printable characters on one line")
     return config
+
+
+def identity_accent(identity: dict) -> str:
+    """The stable stripe/badge color and appearance fallback; theme variants use their light color."""
+    accent = identity["accent"]
+    return accent["light"] if isinstance(accent, dict) else accent
+
+
+def _rgb(color: str) -> tuple[float, float, float]:
+    return tuple(int(color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+
+
+def _luminance(color: str) -> float:
+    channels = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in _rgb(color)]
+    return sum(v * weight for v, weight in zip(channels, (0.2126, 0.7152, 0.0722)))
+
+
+def _foreground(colors: list[str]) -> str:
+    """Black or white with the best worst-case contrast across the accent and its hover state."""
+    if any(not re.fullmatch(r"#[0-9a-fA-F]{6}", c) for c in colors):
+        return "var(--text-on-accent)"  # legacy single CSS colors need not be hex
+    black = min((_luminance(c) + 0.05) / 0.05 for c in colors)
+    white = min(1.05 / (_luminance(c) + 0.05) for c in colors)
+    return "#000000" if black > white else "#ffffff"
+
+
+def _accent_states(color: str, theme: str) -> tuple[tuple[float, float, float], str, str]:
+    """HSL, hover color, and control foreground. Hover darkens in light mode, lightens in dark mode."""
+    h, lightness, saturation = colorsys.rgb_to_hls(*_rgb(color))
+    hover_rgb = colorsys.hls_to_rgb(h, min(1, lightness * (0.9 if theme == "light" else 1.1)), saturation)
+    hover = "#" + "".join(f"{round(v * 255):02x}" for v in hover_rgb)
+    return (h * 360, saturation * 100, lightness * 100), hover, _foreground([color, hover])
 
 
 def declared_settings(config: dict) -> dict[str, dict]:
@@ -91,20 +138,21 @@ def declared_settings(config: dict) -> dict[str, dict]:
     identity = config.get("identity")
     if identity:
         settings["appearance.json"] = overlay(
-            {"accentColor": identity["accent"], "enabledCssSnippets": [IDENTITY_SNIPPET]},
+            {"accentColor": identity_accent(identity), "enabledCssSnippets": [IDENTITY_SNIPPET]},
             settings.get("appearance.json", {}))
     return settings
 
 
 def identity_css(config: dict) -> str | None:
-    """The identity snippet: the stripe's colors in equal bands, 3px tall, above everything, never clickable."""
+    """The non-clickable stripe, optional desktop status-bar badge, and theme-scoped accent variables."""
     identity = config.get("identity")
     if not identity:
         return None
-    colors = identity.get("stripe") or [identity["accent"]]
+    accent = identity_accent(identity)
+    colors = identity.get("stripe") or [accent]
     width = 100 / len(colors)
     stops = ", ".join(f"{c} {i * width:g}% {(i + 1) * width:g}%" for i, c in enumerate(colors))
-    return (f"{IDENTITY_HEADER}\n"
+    css = (f"{IDENTITY_HEADER}\n"
             "body::before {\n"
             "  content: \"\";\n"
             "  position: fixed;\n"
@@ -114,6 +162,51 @@ def identity_css(config: dict) -> str | None:
             "  z-index: 1000;\n"
             "  pointer-events: none;\n"
             "}\n")
+    if isinstance(identity["accent"], dict):
+        for theme in ("light", "dark"):
+            color = identity["accent"][theme]
+            (h, s, lightness), hover, foreground = _accent_states(color, theme)
+            inverse = "#ffffff" if foreground == "#000000" else "#000000"
+            # Obsidian writes accent HSL inline on body. Theme-scoped !important beats that static fallback.
+            # Explicit accent/hover states avoid the app's mode-specific brightening reducing link contrast.
+            css += (f"\nbody.theme-{theme} {{\n"
+                    f"  --accent-h: {h:.6f} !important;\n"
+                    f"  --accent-s: {s:.6f}% !important;\n"
+                    f"  --accent-l: {lightness:.6f}% !important;\n"
+                    f"  --color-accent-hsl: {h:.6f}, {s:.6f}%, {lightness:.6f}% !important;\n"
+                    f"  --color-accent: {color} !important;\n"
+                    f"  --color-accent-1: {color} !important;\n"
+                    f"  --color-accent-2: {hover} !important;\n"
+                    f"  --text-accent: {color} !important;\n"
+                    f"  --text-accent-hover: {hover} !important;\n"
+                    f"  --interactive-accent: {color} !important;\n"
+                    f"  --interactive-accent-hover: {hover} !important;\n"
+                    f"  --text-on-accent: {foreground} !important;\n"
+                    f"  --text-on-accent-inverted: {inverse} !important;\n"
+                    "}\n")
+    if identity.get("label"):
+        # A CSS string, not markup or executable CSS; control characters were refused by workspace_config.
+        label = identity["label"].replace("\\", "\\\\").replace('"', '\\"')
+        css += ("\nbody:not(.is-mobile) .status-bar::before {\n"
+                f'  content: "{label}";\n'
+                f"  background-color: {accent};\n"
+                f"  color: {_foreground([accent])};\n"
+                "  order: -1;\n"
+                "  flex: 0 1 auto;\n"
+                "  min-width: 0;\n"
+                "  max-width: 18em;\n"
+                "  align-self: center;\n"
+                "  padding: 3px 6px;\n"
+                "  border-radius: 3px;\n"
+                "  font-size: var(--font-ui-smaller);\n"
+                "  font-weight: 600;\n"
+                "  line-height: 1;\n"
+                "  white-space: nowrap;\n"
+                "  overflow: hidden;\n"
+                "  text-overflow: ellipsis;\n"
+                "  pointer-events: none;\n"
+                "}\n")
+    return css
 
 
 def overlay(base, patch):

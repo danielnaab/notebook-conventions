@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.1.0 - 2026-11-11
+
+### Added
+
+- Optional `obsidian.identity.label`: a non-clickable badge before the desktop status-bar items, visible with
+  collapsed sidebars. Labels are escaped, limited to one printable line, and truncated rather than covering controls.
+- `obsidian.identity.accent` accepts `{ light = "#3366cc"; dark = "#99bbff"; }` as well as the existing single
+  CSS color. The rendered snippet switches accent HSL/base/hover variables with Obsidian's theme, including system
+  changes. Hover darkens in light mode and lightens in dark mode; contrasting control text is selected automatically.
+  The stripe and badge use the light color consistently, which is also the static appearance fallback.
+- Regression tests for compatibility, declaration validation/escaping, theme states and sample contrast,
+  dry-run/idempotence, drift detection, and changing/removing the label or variants.
+
+### Upgrading
+
+1. `just upgrade notebook-kit@v1.1.0`. Existing single-color declarations and the seeded settings are unchanged;
+   no plugin pins move. A single-color identity without a label renders exactly the same CSS as before.
+2. Optionally add `label = "Workspace A";` and/or replace the accent string with
+   `accent = { light = "#3366cc"; dark = "#99bbff"; };` in the flake's `obsidian.identity` declaration. Both variants
+   must be six-digit hex colors; keep an explicit `stripe` if its colors should differ from the light accent.
+3. Quit Obsidian, then `just upgrade-obsidian --dry-run` and `just upgrade-obsidian`. Do not hand-edit the generated
+   snippet; removing a label or switching back to one accent regenerates it, and removing identity removes it.
+4. `just check` and `just check-obsidian --strict`, then reopen the vault and inspect both light and dark modes,
+   with sidebars collapsed, including links/hover/focus/controls and actual background contrast. The badge needs
+   the desktop status bar visible; CSS text is not a semantic screen-reader label. Custom themes may override it.
+5. Commit the flake, lock, scions and settings/snippet together. Nothing changes in workspaces that declare no identity.
+
 ## v1.0.0 - 2026-11-11
 
 **Renamed:** notebook-conventions is now **notebook-kit**: something a workspace takes on and keeps upgrading

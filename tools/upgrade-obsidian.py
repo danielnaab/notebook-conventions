@@ -12,8 +12,9 @@ release's `main.js`, `manifest.json`, and `styles.css`, and its `data.json` is l
 
 A workspace declares its deliberate deviations in its flake (the `obsidian` argument to nix/workspace.nix), which
 reaches this tool as $OBSIDIAN_WORKSPACE. They are applied last, so they win over both the kit and the vault:
-`settings` overlays the named files, and `identity` sets the accent color and renders and enables the
-`vault-identity` CSS snippet, a thin stripe across the top of the window. Removing the identity removes the snippet.
+`settings` overlays the named files, and `identity` renders and enables the `vault-identity` CSS snippet: a thin
+window stripe, optional desktop status-bar label, and optional light/dark accents. Removing the identity removes
+its snippet; changing or removing a label or the variants regenerates it.
 
 Run it from the workspace root on the upgrade branch, after `just upgrade`, with Obsidian closed:
 Obsidian rewrites its settings files while it runs. It refuses to write while Obsidian runs, and reports and exits 0

@@ -15,7 +15,11 @@
 # expects and upgrade-obsidian applies (docs/obsidian.md#declared-deviations):
 #   obsidian = {
 #     settings."app.json".openBehavior = "file";    # settings file -> keys overlaid on the seed
-#     identity = { accent = "#3366cc"; stripe = [ "#3366cc" "#cc6633" ]; };  # accent color and a window stripe
+#     identity = {
+#       label = "Workspace A";  # optional desktop status-bar badge
+#       accent = { light = "#3366cc"; dark = "#99bbff"; };  # or one CSS color string for both modes
+#       stripe = [ "#3366cc" "#cc6633" ];  # constant window stripe
+#     };
 #   };
 #
 # flakeDir: where the workspace's flake.nix sits under its top, as given to graft's mkFlake (default `.`). A flake

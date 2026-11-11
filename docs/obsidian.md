@@ -119,17 +119,33 @@ workspace = import "${inputs.notebook-kit}/nix/workspace.nix" {
   inherit inputs flakeDir;
   obsidian = {
     settings."app.json".openBehavior = "file";   # settings file -> keys overlaid on the seed
-    identity = { accent = "#3366cc"; stripe = [ "#3366cc" "#cc6633" ]; };
+    identity = {
+      label = "Workspace A";
+      accent = { light = "#3366cc"; dark = "#99bbff"; };
+      stripe = [ "#3366cc" "#ffffff" "#cc6633" ];
+    };
   };
 };
 ```
 
 - `settings` maps a settings file under `.obsidian/` to the keys it overrides. Objects overlay key by key; a list
   of plain values gains the declared items.
-- `identity` tells vaults apart when several are open at once. `accent` sets Obsidian's accent color (links, the
-  active tab, checkboxes). `stripe`, default `[ accent ]`, is the colors of a 3px band across the top of the
-  window, in equal parts, rendered as the `vault-identity` CSS snippet and enabled in `appearance.json`. It covers
-  no controls and takes no clicks.
+- `identity` tells vaults apart when several are open at once. `accent` is a single CSS color (the existing
+  behavior), or `{ light = "#3366cc"; dark = "#99bbff"; }` with both colors in `#RRGGBB` form. Variants follow
+  Obsidian's active theme, including system-driven changes; there is no separate toggle. The light color is the
+  static `appearance.json` fallback. Generated CSS overrides the accent HSL/base/hover variables per theme;
+  hover darkens in light mode and lightens in dark mode, with black/white control text chosen for contrast.
+- `stripe` is a 3px band across the top of the window, in equal color segments. It stays constant across themes;
+  without an explicit stripe it uses the single accent, or the light variant. It covers no controls and takes no clicks.
+- Optional `label` is 1–64 printable characters on one line. It is a non-clickable badge before the desktop
+  status-bar items, visible with collapsed sidebars while the status bar is shown. Its background is the single
+  accent or light variant, constant across modes; hex colors get contrasting black/white text. Long labels truncate.
+  The kit does not force a hidden status bar to show, add a mobile badge, or overlay note/window controls.
+  CSS-generated text is a visual cue, not a reliable semantic label for screen readers or a security marking.
+- All identity styling is rendered into `vault-identity.css` and enabled in `appearance.json`. Change the flake,
+  not the generated CSS. Check actual link, hover, focus, and control contrast against editor/sidebar backgrounds
+  in both modes (4.5:1 for normal text); custom themes can override appearance. There is no blanket accessibility
+  guarantee or full theme replacement.
 - `upgrade-obsidian` applies the declarations last, so they win over both a kit change and a value set in the
   vault, and reports each as `declare`. Removing `identity` removes the snippet it rendered.
 - `check-obsidian` compares the vault with the seed plus the declarations. A file that matches is `same` and
