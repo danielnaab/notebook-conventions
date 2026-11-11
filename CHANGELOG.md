@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.7.0 - 2026-11-11
+
+The daily note template carries no guidance comments, so they stop showing in every note and in the app. The rules
+for each section live in the [workflow](docs/workflow.md#daily-notes), where agents read them.
+
+### Changed
+
+- `templates/daily.md`: the HTML comments under `## Activity`, `## Lookups` and `## Agent sessions` are removed;
+  the sections themselves are unchanged.
+
+### Upgrading
+
+1. `just upgrade notebook-conventions@v0.7.0`.
+2. In `notebook/templates/daily.md`, delete the three `<!-- ... -->` comment blocks, or copy the file from
+   `.scions/notebook-conventions/templates/daily.md`. Existing daily notes are records; leave them alone.
+   Done when `just check-templates` reports `daily.md` as the same as the kit's copy.
+
 ## v0.6.0 - 2026-11-10
 
 A workspace declares its deliberate Obsidian deviations in its flake, so workspaces share the seeded settings
