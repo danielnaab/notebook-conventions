@@ -1,4 +1,4 @@
-apiVersion: meta-kb/v1
+apiVersion: kb/v1
 name: "<<WORKSPACE_NAME>>"
 description: "<<ONE_LINE_DESCRIPTION>>"
 
@@ -8,7 +8,7 @@ entrypoints:
 
 imports:
   - kind: local
-    path: .scions/meta-knowledge-base
+    path: .scions/knowledge-base-kit
     relationship: foundational
     sync_policy: extend
   - kind: local
@@ -17,7 +17,7 @@ imports:
     sync_policy: extend
 
 composition:
-  precedence: domain-over-pack
+  precedence: domain-over-imports
   mergeStrategy: deep-merge
 
 paths:
@@ -55,7 +55,7 @@ sources:
       note: "Sources as captured; never edited after capture."
 
 rules:
-  # Scopes for knowledge-base-integrity (just check-kb). Records and raw sources carry no status;
+  # Scopes for knowledge-base-kit's checker (just check-kb). Records and raw sources carry no status;
   # task records are checked by just check-tasks; .scions/ is graft output.
   checks:
     okf:

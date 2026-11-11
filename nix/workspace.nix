@@ -3,7 +3,7 @@
 # In a workspace's flake.nix (see seed/common/flake.nix):
 #   outputs = import "${inputs.notebook-conventions}/nix/workspace.nix" { inherit inputs; };
 #
-# Needs the inputs `nixpkgs` and `knowledge-base-integrity` (flake = false), and `self` (for the task check).
+# Needs the inputs `nixpkgs` and `knowledge-base-kit` (flake = false; its src/ is the checker), and `self` (for the task check).
 #
 # Outputs: a dev shell; an app per kit tool (nix run .#check-kb); the task check; packages.tools, one directory
 # whose bin/ holds every kit tool plus just and markdownlint-cli2; and packages.obsidian-plugins, the pinned
@@ -34,7 +34,7 @@ let
   kit = ../.;
   forAll = f: lib.genAttrs systems (system: f inputs.nixpkgs.legacyPackages.${system});
   python = pkgs: pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
-  kbiSrc = "${inputs.knowledge-base-integrity}/src";
+  kbiSrc = "${inputs.knowledge-base-kit}/src";
   # The pinned community-plugin releases (docs/obsidian-plugins.json), fetched and checked against their hashes:
   # <id>/<asset> for each, which upgrade-obsidian installs into the vault.
   obsidianPlugins = pkgs: pkgs.linkFarm "obsidian-plugins" (lib.concatMap (pin:
@@ -56,7 +56,7 @@ let
 
   # name -> [ script description needsKbi ]
   tools = {
-    check-kb = [ "check-kb.py" "Check links, lifecycle status, and Sources with knowledge-base-integrity" true ];
+    check-kb = [ "check-kb.py" "Check links, lifecycle status, and Sources with knowledge-base-kit's checker" true ];
     check-templates = [ "check-templates.py" "Report how note templates differ from the pinned canonical copies" false ];
     check-obsidian = [ "check-obsidian.py"
       "Report how the vault's shared Obsidian settings and plugins differ from the kit's" false ];

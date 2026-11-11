@@ -11,7 +11,7 @@ Markdown in Obsidian.
   conflicting guidance elsewhere.
 - Conventions are the pinned [notebook-conventions](.scions/notebook-conventions/docs/README.md) kit, extended by
   [local conventions](docs/conventions.md), which take precedence. The kit extends the pinned
-  [meta-KB guidance](.scions/meta-knowledge-base/README.md); read [KB configuration](knowledge-base.yaml) before editing.
+  [knowledge-base-kit guidance](.scions/knowledge-base-kit/README.md); read [KB configuration](knowledge-base.yaml) before editing.
 
 ## Working style
 

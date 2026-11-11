@@ -1,4 +1,4 @@
-apiVersion: meta-kb/v1
+apiVersion: kb/v1
 name: notebook-conventions
 description: "Conventions, tools, skills, and a starter seed for Markdown work-memory workspaces."
 
@@ -8,7 +8,7 @@ entrypoints:
 
 imports:
   - kind: local
-    path: .scions/meta-knowledge-base
+    path: .scions/knowledge-base-kit
     relationship: foundational
     sync_policy: extend
 

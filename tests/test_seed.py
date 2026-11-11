@@ -1,7 +1,7 @@
 """Build a workspace from seed/ the way docs/adoption.md says, then run every check on it.
 
 Fixtures are synthetic. The scions are simulated by copying the kit's exported directories and its own
-grafted meta-KB, so no network is needed. knowledge-base-integrity comes from KBI_SRC (skipped if unset).
+grafted knowledge-base-kit, so no network is needed. Its checker comes from KBI_SRC (skipped if unset).
 """
 
 import json
@@ -41,7 +41,7 @@ def build_workspace(root: Path) -> None:
     for name in ("README.md", "CHANGELOG.md"):
         if (KIT / name).exists():
             shutil.copy2(KIT / name, scion / name)
-    shutil.copytree(KIT / ".scions" / "meta-knowledge-base", root / ".scions" / "meta-knowledge-base")
+    shutil.copytree(KIT / ".scions" / "knowledge-base-kit", root / ".scions" / "knowledge-base-kit")
     shutil.copy2(KIT / ".scions" / "README.md", root / ".scions" / "README.md")
     for template in (scion / "templates").glob("*.md"):
         shutil.copy2(template, root / "notebook/templates" / template.name)

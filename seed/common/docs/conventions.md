@@ -5,7 +5,7 @@ status: working
 # Local conventions
 
 This workspace follows the pinned [notebook-conventions](../.scions/notebook-conventions/docs/README.md) kit and
-the [meta-KB](../.scions/meta-knowledge-base/README.md). This file states only local rules and differences.
+[knowledge-base-kit](../.scions/knowledge-base-kit/README.md). This file states only local rules and differences.
 Local rules take precedence. [Boundaries](boundaries.md) are separate and override everything.
 
 ## Local rules

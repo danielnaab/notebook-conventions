@@ -4,12 +4,9 @@
   inputs = {
     graft.url = "github:danielnaab/graft/v2.7.0";
     nixpkgs.follows = "graft/nixpkgs";
-    meta-knowledge-base = {
-      url = "github:danielnaab/meta-knowledge-base/v1.1.0";
-      flake = false;
-    };
-    knowledge-base-integrity = {
-      url = "github:danielnaab/knowledge-base-integrity/v0.4.0";
+    # The conventions and the checker: grafted to .scions/, and the checker read from the same pin.
+    knowledge-base-kit = {
+      url = "github:danielnaab/knowledge-base-kit/kit-v2";
       flake = false;
     };
   };
@@ -25,7 +22,7 @@
         checks = forAll (pkgs: {
           tests = pkgs.runCommand "kit-tests" {
             nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) pkgs.git pkgs.just ];
-            KBI_SRC = "${inputs.knowledge-base-integrity}/src";
+            KBI_SRC = "${inputs.knowledge-base-kit}/src";
             PYTHONDONTWRITEBYTECODE = "1";
           } ''
             cp -r ${inputs.self} src && chmod -R u+w src && cd src
@@ -37,8 +34,6 @@
     in
     inputs.graft.lib.mkFlake {
       inherit inputs;
-      # named, because knowledge-base-integrity is `flake = false` for the tools but isn't a scion
-      scions = [ "meta-knowledge-base" ];
       dir = ".scions";
       outputs = lib.recursiveUpdate workspace kitChecks;
     };
