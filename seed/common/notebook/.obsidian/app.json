@@ -3,5 +3,7 @@
   "newLinkFormat": "relative",
   "useMarkdownLinks": true,
   "attachmentFolderPath": "./attachments",
-  "openBehavior": "daily"
+  "openBehavior": "daily",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "wiki"
 }

@@ -19,6 +19,7 @@ reviewed plugin settings; machine-specific UI state stays local.
 | Templates folder | `templates` |
 | Open on startup | Current daily note (`app.json` → `openBehavior: daily`) |
 | Markdown links | Enabled, relative paths; link updates on rename enabled; wikilinks off |
+| New notes | `wiki/` (`app.json` → `newFileLocation: folder`, `newFileFolderPath: wiki`), including a note made by clicking a link to a note that does not exist yet |
 | Attachments | `./attachments`, beside the note's folder |
 | File picker | `Mod-P`: Quick Switcher++ file mode; the stock quick switcher stays on `Mod-O` |
 | Command picker | `Mod-Shift-P`: Quick Switcher++ command mode; the stock command palette has no shortcut |

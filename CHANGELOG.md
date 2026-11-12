@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.3.0 - 2026-11-12
+
+### Changed
+
+- The seed's Obsidian settings put new notes in `wiki/` (`app.json`: `newFileLocation: folder`,
+  `newFileFolderPath: wiki`). Obsidian's default was the vault's top folder, so a note made from the file menu or by
+  clicking a link to a note that does not exist yet landed beside `index.md`, outside the kit's layout. Daily notes
+  keep their own folder (`daily-notes.json`).
+
+### Upgrading
+
+1. `just upgrade notebook-kit@v1.3.0`.
+2. Quit Obsidian, then `just upgrade-obsidian --dry-run`: it should list `app.json` with the two new keys and
+   nothing else. Run `just upgrade-obsidian`.
+3. `just check-obsidian --strict` lists `app.json` as same (or as declared, if the workspace declares its own
+   `newFileFolderPath`).
+4. Move any notes Obsidian already made at the vault's top into `wiki/` with `just move`, which rewrites links to
+   them. This lists the candidates:
+   `git ls-files notebook | grep -E '^notebook/[^/]+\.md$' | grep -v '^notebook/index.md$'`
+5. Reopen the vault; Settings → Files and links → "Default location for new notes" reads "In the folder specified
+   below", `wiki`.
+
 ## v1.2.0 - 2026-11-12
 
 ### Added
