@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.2.0 - 2026-11-12
+
+### Added
+
+- `## Notes` before Activity in the daily template, reserved for human-input narrative. Activity remains
+  agent-maintained; section ownership does not restrict the owner's ability to edit any part of a note.
+- Daily-note ownership and contextual-review guidance in the workflow and start/wrap skills. Agents preserve
+  human wording and edits, distinguish actors and proposals, and suggest canonical updates from relevant Notes
+  without treating tentative thoughts as tasks or authorization. No background review or new automation.
+- A seed-workspace regression test for the empty Notes section and daily heading order.
+
+### Upgrading
+
+1. `just upgrade notebook-kit@v1.2.0`. No tools, Obsidian settings, or plugin pins change.
+2. Add `## Notes` before `## Activity` in `notebook/templates/daily.md`, preserving any local template content.
+   For an uncustomized template, copy `.scions/notebook-kit/templates/daily.md` over the workspace copy.
+3. Update the daily-note description in `notebook/templates/README.md` if the workspace keeps the seeded description.
+   Point local ownership/review guidance at the kit's [daily-note rules](docs/workflow.md#daily-notes) instead of copying them.
+4. Use Notes in new daily notes. The current day's note may gain the empty heading while preserving all entries;
+   leave historical notes unchanged and do not infer or relabel their authorship.
+5. Run `just check` and `just check-templates --strict`. The daily template should match the kit unless
+   deliberately customized. Commit the pin, lock, generated scions, template, and applicable consumer changes together.
+
 ## v1.1.1 - 2026-11-12
 
 ### Changed

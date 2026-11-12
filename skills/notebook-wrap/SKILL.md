@@ -28,10 +28,12 @@ templates in `notebook/templates/`.
    unrun checks.
 5. Update durable `notebook/wiki/` pages when understanding changes, with lifecycle status and provenance
    (`sources` frontmatter or `## Sources`). Links stay inside `notebook/`; move notes with `just move`.
-6. In `notebook/records/daily/YYYY-MM/YYYY-MM-DD.md` use Activity for work and decisions and
-   [Lookups](../../docs/workflow.md#lookup-signals) for compact request intent, outcome, and source.
-   Sanitize topics, group related requests, never invent counts, and never duplicate what Activity or a session
-   already holds. List sessions only when they were active that day. Preserve existing entries.
+6. Follow the [daily-note ownership and review rules](../../docs/workflow.md#daily-notes): reserve Notes for
+   human input; preserve human wording and edits in every section. At a relevant checkpoint, review only Notes
+   entries related to the focus and suggest canonical updates without treating tentative thoughts as tasks or authorization.
+   Use Activity for work and decisions and [Lookups](../../docs/workflow.md#lookup-signals) for compact request
+   intent, outcome, and source. Sanitize topics, group related requests, never invent counts, and never duplicate
+   what Activity or a session already holds. List sessions only when they were active that day. Preserve existing entries.
 7. Update affected task records under [tasks](../../docs/tasks.md), then regenerate indexes with
    `just index`. Capture confirmed TODOs,
    not a task per answered question; verify evidence before closing; keep paths stable. Validate with

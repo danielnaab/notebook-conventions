@@ -97,6 +97,13 @@ class SeedTest(unittest.TestCase):
         proc = self.run_tool(str(KIT / "tools/check-templates.py"), "--root", str(self.root), "--strict")
         self.assertEqual(0, proc.returncode, proc.stdout)
 
+    def test_daily_template_reserves_empty_human_notes_before_agent_sections(self):
+        daily = (self.root / "notebook/templates/daily.md").read_text()
+        self.assertEqual(["Notes", "Activity", "Lookups", "Agent sessions"],
+                         re.findall(r"^## (.+)$", daily, re.M))
+        self.assertRegex(daily, r"## Notes\n\n## Activity")
+        self.assertNotIn("<!--", daily, "ownership guidance belongs in workflow docs, not every daily note")
+
     def test_obsidian_settings_match_the_seed(self):
         proc = self.run_tool(str(KIT / "tools/check-obsidian.py"), "--root", str(self.root), "--strict")
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)

@@ -10,7 +10,7 @@
       flake = false;
     };
     notebook-kit = {
-      url = "github:danielnaab/notebook-kit/v1.1.1";
+      url = "github:danielnaab/notebook-kit/v1.2.0";
       flake = false;
     };
   };
