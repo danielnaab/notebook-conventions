@@ -8,4 +8,4 @@ them. To upgrade: `nix run .#graft upgrade` (or change the tag in `flake.nix`, t
 
 | Scion | Commit |
 |---|---|
-| [knowledge-base-kit](knowledge-base-kit/) | `f95fa544dbd92d7ebba36ef7d4eb6c8bfb8a28f8` |
+| [knowledge-base-kit](knowledge-base-kit/) | `348eff0aa27fd519507ba168d440f2854ee54189` |

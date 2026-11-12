@@ -126,7 +126,7 @@ Graft it ([graft](https://github.com/danielnaab/graft/tree/v2)): the export (REA
 `adapters/`, `examples/` and the checker's `src/`) lands at a pinned tag in your scions directory.
 
 ```nix
-inputs.knowledge-base-kit = { url = "github:danielnaab/knowledge-base-kit/v2.0.0"; flake = false; };
+inputs.knowledge-base-kit = { url = "github:danielnaab/knowledge-base-kit/v2.1.0"; flake = false; };
 ```
 
 Then add a `knowledge-base.yaml` at your repo root. `apiVersion: kb/v1` is the only value; nothing reads it yet.

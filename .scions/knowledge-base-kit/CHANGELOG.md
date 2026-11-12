@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## v2.1.0 - 2026-11-12
+
+Findings from rewriting graft's docs to these conventions. No checker change.
+
+### Fixed
+- **`docs/tools.md`:** run the checker from a scion with `python3 -B`. Without it Python writes `__pycache__/`
+  into the scion, and graft's drift check fails (seen in graft, 2026-11-12).
+- **Manage KB dependencies playbook, Extend policy:** upgrade with `nix run .#graft upgrade`. The old
+  `nix flake update <name>` re-locked the same tag and never moved to a new one.
+
+### Changed
+- **Style policy:** brevity means saying each thing once, never cutting a reason or a limit; bullets for
+  parallel items, prose for reasoning; rules for procedures (ASD-STE100: imperative numbered steps, one
+  action each, conditions first) and for terms (one term per concept); the kit's document types mapped to
+  Diátaxis, with lengths for each, reference and explanation included.
+- **Linking policy:** link text says where it goes; backticks for any literal text the reader types or sees
+  (commands, flags, keys, identifiers), not only paths; the rule for exported files moved here from the
+  dependencies playbook, with links by URL at the pinned tag.
+- **Lifecycle policy:** a log of decisions that still hold is `living`; a dated decision record is not.
+
 ## v2.0.0 - 2026-11-11
 
 meta-knowledge-base (the conventions, v1.x) and knowledge-base-integrity (the checker, v0.x) are one repo,

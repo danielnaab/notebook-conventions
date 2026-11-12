@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.1.1 - 2026-11-12
+
+### Changed
+
+- The seed pins graft v2.11.0 and knowledge-base-kit v2.1.0, as the kit itself now does. graft v2.11.0 keeps a
+  workspace's own `branches:` line in graft-check.yaml and rewrites its docs; knowledge-base-kit v2.1.0 revises
+  its style, linking and lifecycle policies. No change to the kit's tools.
+
+### Upgrading
+
+1. `just upgrade`. A workspace seeded earlier keeps its own pins; `just upgrade` (or the weekly upgrade PR)
+   moves graft and knowledge-base-kit within their major versions.
+
 ## v1.1.0 - 2026-11-11
 
 ### Added

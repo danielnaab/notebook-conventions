@@ -12,7 +12,7 @@ clone, worktree, agent and the forge's web view then reads the same text with no
 See [graft](https://github.com/danielnaab/graft/tree/v2) for the flake inputs; in short:
 
 ```nix
-inputs.knowledge-base-kit = { url = "github:danielnaab/knowledge-base-kit/v2.0.0"; flake = false; };
+inputs.knowledge-base-kit = { url = "github:danielnaab/knowledge-base-kit/v2.1.0"; flake = false; };
 outputs = inputs: inputs.graft.lib.mkFlake { inherit inputs; };
 ```
 
@@ -40,9 +40,7 @@ out of what others graft. Always exclude your own `scions/`: consumers take your
 your dependencies, so every repo has one level of scions and one copy of each dependency.
 Tag releases (`v1.0.0`) so consumers pin something readable, and say what changed in a CHANGELOG.
 
-Exported files link only to exported files. A link from your README or `docs/` into `scions/`, `specs/` or any
-other export-ignored path works in your repo and breaks in every consumer's copy; link to the dependency by URL
-instead. Files you don't export (AGENTS.md, specs) may link into your `scions/`.
+Exported files link only to exported files ([Linking policy](../policies/linking.md#exported-files)).
 
 ### Dependencies are between exports
 
@@ -85,7 +83,8 @@ Each rule has one owner; a repo that enforces another's rule cites it rather tha
 **Extend policy** (for foundational):
 - Mark inherited vs added content
 - The pinned version is in `flake.lock` and `scions/README.md`
-- Update when foundation changes: `nix flake update <name>`, `nix run .#graft`, review the diff
+- Update when foundation changes: `nix run .#graft changelog`, then `nix run .#graft upgrade`, then review
+  the diff of `scions/`
 
 **Reference policy** (for peer):
 - Standard markdown links

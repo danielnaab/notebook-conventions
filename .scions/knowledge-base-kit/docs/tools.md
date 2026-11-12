@@ -21,9 +21,12 @@ link-validator /path/to/kb
 From a repo that grafts the kit (no install; Python 3.11+ standard library only):
 
 ```bash
-PYTHONPATH=scions/knowledge-base-kit/src python3 -m link_validator .
-PYTHONPATH=scions/knowledge-base-kit/src python3 -m kb_linter .
+PYTHONPATH=scions/knowledge-base-kit/src python3 -B -m link_validator .
+PYTHONPATH=scions/knowledge-base-kit/src python3 -B -m kb_linter .
 ```
+
+`-B` keeps Python from writing `__pycache__/` into the scion, which graft's drift check would report. In a
+Nix check, read the fetched export instead: `PYTHONPATH=${inputs.knowledge-base-kit}/src`.
 
 Exit codes: 0 no findings (or `--report-only`), 1 findings, 2 a configuration error. Output is JSON.
 

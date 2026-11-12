@@ -2,11 +2,11 @@
   description = "Conventions, tools, and a starter seed for Markdown work-memory workspaces";
 
   inputs = {
-    graft.url = "github:danielnaab/graft/v2.7.0";
+    graft.url = "github:danielnaab/graft/v2.11.0";
     nixpkgs.follows = "graft/nixpkgs";
     # The conventions and the checker: grafted to .scions/, and the checker read from the same pin.
     knowledge-base-kit = {
-      url = "github:danielnaab/knowledge-base-kit/v2.0.0";
+      url = "github:danielnaab/knowledge-base-kit/v2.1.0";
       flake = false;
     };
   };

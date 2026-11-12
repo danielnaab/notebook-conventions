@@ -2,15 +2,15 @@
   description = "<<WORKSPACE_NAME>> work-memory workspace";
 
   inputs = {
-    graft.url = "github:danielnaab/graft/v2.7.0";
+    graft.url = "github:danielnaab/graft/v2.11.0";
     nixpkgs.follows = "graft/nixpkgs";
     # The conventions and the checker; the checker is read from this same pin (its src/).
     knowledge-base-kit = {
-      url = "github:danielnaab/knowledge-base-kit/v2.0.0";
+      url = "github:danielnaab/knowledge-base-kit/v2.1.0";
       flake = false;
     };
     notebook-kit = {
-      url = "github:danielnaab/notebook-kit/v1.1.0";
+      url = "github:danielnaab/notebook-kit/v1.1.1";
       flake = false;
     };
   };
