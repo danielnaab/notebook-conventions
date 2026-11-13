@@ -2,7 +2,7 @@
   description = "<<WORKSPACE_NAME>> work-memory workspace";
 
   inputs = {
-    graft.url = "github:danielnaab/graft/v2.11.0";
+    graft.url = "github:danielnaab/graft/v2.12.0";
     nixpkgs.follows = "graft/nixpkgs";
     # The conventions and the checker; the checker is read from this same pin (its src/).
     knowledge-base-kit = {
@@ -10,7 +10,7 @@
       flake = false;
     };
     notebook-kit = {
-      url = "github:danielnaab/notebook-kit/v1.3.0";
+      url = "github:danielnaab/notebook-kit/v1.3.1";
       flake = false;
     };
   };

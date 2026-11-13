@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.3.1 - 2026-11-13
+
+### Changed
+
+- The kit and its seed pin graft v2.12.0 (was v2.11.0). New workspaces start on it.
+
+### Upgrading
+
+- A workspace on an earlier graft: run `just upgrade graft`, then commit `nix/agent-tools/flake.nix`,
+  `nix/agent-tools/flake.lock`, `.scions/README.md` (its commands are now quoted for zsh) and the two refreshed
+  `.forgejo/workflows/graft-*.yaml`. The weekly upgrade onto graft v2.12.0 opens no pull request, because graft's
+  workflows change: read graft's CHANGELOG Upgrading section first. Done when `just check` passes.
+
 ## v1.3.0 - 2026-11-12
 
 ### Changed
