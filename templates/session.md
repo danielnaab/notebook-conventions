@@ -2,11 +2,14 @@
 type: Session
 title: "{{title}}"
 description: ""
+harness_sessions: []
 ---
 
 <!-- Use only when reasoning, context, or artifacts merit a session record. Useful small
      outcomes and user lookup-use signals can be daily-only; incidental mechanics/chatter
-     need no note. Reuse a coherent session rather than create one per question. -->
+     need no note. Reuse a coherent session rather than create one per question.
+     harness_sessions: add { harness, id, host } for each agent-harness session that
+     worked on this record, e.g. { harness: claude-code, id: $CLAUDE_CODE_SESSION_ID }. -->
 
 # {{title}}
 

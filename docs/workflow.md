@@ -114,6 +114,12 @@ possible follow-ups, or recurring questions that suggest a task or durable-note 
   an unrelated session; use a more specific slug and never overwrite.
 - A session resumed on another date keeps its original file. Update it and link it from each active day's note.
   Date significant follow-ups; do not silently rewrite earlier decisions.
+- A session record is the owner's unit of work; a harness session (one agent conversation, with its own
+  transcript) is the tool's. One record may span several. Each harness session that works on a record appends
+  itself to `harness_sessions` ([layout](layout.md#notes)) with the id the harness exposes, such as Claude Code's
+  `$CLAUDE_CODE_SESSION_ID`, so a deeper review can open the original transcript. Read the id from the harness;
+  if it exposes none, omit the entry rather than guess. The record still owns the reasoning: the transcript is
+  evidence, not a substitute, and it is never copied in.
 - Artifacts are snapshots. Promote lasting insight into a wiki page and link the evidence back.
   Deleting a completed session requires authorization.
 - Log outcomes, decisions and rationale, evidence, blockers and owners, and next actions. For delegated work

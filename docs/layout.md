@@ -41,6 +41,7 @@ Every note in the bundle is OKF frontmatter plus a Markdown body.
 | `sources` | Provenance: each entry has a `resource` (URL or path) and an `id` that footnotes cite (`[^id]`). |
 | `generated` | Agent-written notes: `{ by: <producer>/<version>, at: <ISO 8601 with offset> }`. |
 | `verified` | A review: `{ by: human:<id>, at: … }`; `process:<id>` names an automated check. |
+| `harness_sessions` | Session records: the agent-harness sessions that worked on the record, so the transcript can be found again. A list of `{ harness: <name>, id: <the harness's session id>, host: <machine, optional> }`; see [workflow](workflow.md#sessions-and-closure). |
 | `stale_after` | When a note about something time-bound stops being trustworthy. |
 | `resource` | For a raw source: the URL or document it was captured from. |
 

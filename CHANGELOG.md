@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.4.0 - 2026-11-13
+
+### Added
+
+- `harness_sessions` frontmatter on session records: a list of `{ harness, id, host }` naming each agent-harness
+  session (one agent conversation and its transcript) that worked on the record, so a later, deeper review can find
+  the original transcript. One record may span several harness sessions; each appends itself. The id comes from the
+  harness (Claude Code: `$CLAUDE_CODE_SESSION_ID`, which is also the transcript's filename); when a harness exposes
+  none, the entry is omitted. Documented in [layout](docs/layout.md#notes) and
+  [workflow](docs/workflow.md#sessions-and-closure); `notebook-wrap` records it; the session template carries an
+  empty list.
+
+### Upgrading
+
+1. `just upgrade notebook-kit@v1.4.0`.
+2. Add `harness_sessions: []` after `description` in the workspace's `session.md` template (and the comment from
+   the kit's `templates/session.md`, if the workspace keeps the template comments). `just check-templates` then
+   lists `session.md` as same, unless the workspace has adapted it.
+3. Existing session records need no change. Optionally, while a harness session is still known (for example the
+   session that is open now), add it to the record it worked on.
+4. If the workspace's agents can look sessions up by id (a transcript store or search server), say so in its own
+   conventions; the kit names no service.
+
 ## v1.3.1 - 2026-11-13
 
 ### Changed

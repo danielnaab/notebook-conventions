@@ -21,7 +21,8 @@ templates in `notebook/templates/`.
 3. Sessions: start or resume a minimal goal and source index at
    `notebook/records/sessions/YYYY-MM/YYYY-MM-DD-<topic>.md`, artifacts in a sibling `YYYY-MM-DD-<topic>/` folder;
    add reasoning and artifacts at milestones. Every note gets a `type`; agent-written notes record `generated`
-   ([layout](../../docs/layout.md#notes)). Daily-only
+   ([layout](../../docs/layout.md#notes)). Append the current harness session to `harness_sessions` if it is
+   not listed ([sessions](../../docs/workflow.md#sessions-and-closure)). Daily-only
    outcomes create no session. For delegation record the repo, handle, session, ownership, completion condition,
    and disposition.
 4. Distinguish proposed, changed, committed, pushed, merged, and activated work. State exact verification and
