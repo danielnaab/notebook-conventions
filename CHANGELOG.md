@@ -80,11 +80,14 @@ from a release before v1.4.0, apply the Upgrading steps of every release you ski
 5. If anything runs the kit's tools by name outside `just` (`nix run .#index`, `.local/tools/bin/move`, scripts,
    agent instructions): `index` → `nb-index`, `move` → `nb-move`, `convert` → `nb-convert`. `just index`,
    `just move` and `just convert` are unchanged; a `kit_run` template (`"{}"`, `".local/tools/bin/{}"`) needs no change.
-6. Point `.githooks/pre-commit`, `.pi/settings.json` (`skills`), `knowledge-base.yaml` (each `imports[].path`, and
-   the scions directory in `rules.writes.deny`, e.g. `.scions/**` → `nix/agent-tools/.scions/**`) and links at the
-   kit's scion if its path changed;
+6. Point `.githooks/pre-commit`, `.pi/settings.json` (`skills`), `knowledge-base.yaml` (each `imports[].path`) and
+   links at the kit's scion if its path changed;
    the seed's wrapper (`.scions/notebook-kit/seed/common/.githooks/pre-commit`) also says what to do when the
-   scion is empty. Replace AGENTS.md's "Never edit `.scions/`; it is graft output" with the seed's scions rule.
+   scion is empty. In `knowledge-base.yaml`, move the scions directory from `rules.writes.deny` to the front of
+   `askFirst` (`.scions/**`, or e.g. `nix/agent-tools/.scions/**`): a scion is a real clone now, and an edit there
+   is a provider fix a person approves. Replace AGENTS.md's "Never edit `.scions/`; it is graft output" with the
+   seed's scions rule (ask before editing a scion), and change any agent-tool rule that denies edits there to ask
+   (Claude Code: `permissions.ask`).
 7. If your dev shell relied on git, ripgrep or Python from the kit, add them with `perSystem`
    (`devShells.default = pkgs.mkShell { packages = [ … ]; }`, plus the tools package if you want it there).
 8. With Obsidian closed: `just upgrade-obsidian`. A workspace with an `identity` gets `vault-identity.css`

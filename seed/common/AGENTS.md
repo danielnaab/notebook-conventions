@@ -43,8 +43,8 @@ Markdown in Obsidian.
 - `knowledge-base.yaml` `rules.writes` lists allowed, denied, and ask-first paths. They are behavioral guardrails,
   not enforcement. Ask before changing an `askFirst` path and record the approval in the task, session, daily
   note, or commit message. Unlisted paths get conservative, documentation-only edits.
-- `.scions/` holds git submodules: other repositories at release tags. Read them; don't commit edits there. Fix a
-  kit in its own repository, release it, then take it with `just upgrade` (the kit's
+- `.scions/` holds git submodules: other repositories at release tags. Read them; ask before editing one: a fix
+  belongs in the provider (a branch in the scion), released, then taken with `just upgrade` (the kit's
   [adoption guide](.scions/notebook-kit/docs/adoption.md)). Nix builds see an uncommitted scion edit only while
   another tracked file is modified; `just check` (graft check) fails while a scion has edits or sits off a tag.
 - No publication, pushes, external messages, deployments, or destructive cleanup without explicit authorization.
