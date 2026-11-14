@@ -6,38 +6,21 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1794575081,
-        "narHash": "sha256-+4dyG9emMzTTX0cyeOWpIZuKEUj93AsAiEANM6h8l0E=",
+        "lastModified": 1794668029,
+        "narHash": "sha256-AZz92XaRsnhjIxF9wdMRsMFCHAit23Vkweh1/PDMWXY=",
         "owner": "danielnaab",
         "repo": "graft",
-        "rev": "9314f1d79d27eb542d36d0c6b29078e94118d627",
+        "rev": "18252abce4444f8bde0aea4d93af4ef32e5340c7",
         "type": "github"
       },
       "original": {
         "owner": "danielnaab",
-        "ref": "v2.12.0",
+        "ref": "v2.13.1",
         "repo": "graft",
         "type": "github"
       }
     },
     "knowledge-base-kit": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794498455,
-        "narHash": "sha256-qMUlgi+5vWSDQjWacNGS3K2brS1v7LsYzAirJGq/fvA=",
-        "owner": "danielnaab",
-        "repo": "knowledge-base-kit",
-        "rev": "348eff0aa27fd519507ba168d440f2854ee54189",
-        "type": "github"
-      },
-      "original": {
-        "owner": "danielnaab",
-        "ref": "v2.1.0",
-        "repo": "knowledge-base-kit",
-        "type": "github"
-      }
-    },
-    "knowledge-base-kit_2": {
       "flake": false,
       "locked": {
         "lastModified": 1794498455,
@@ -73,7 +56,6 @@
     "root": {
       "inputs": {
         "graft": "graft",
-        "knowledge-base-kit": "knowledge-base-kit_2",
         "nixpkgs": [
           "graft",
           "nixpkgs"

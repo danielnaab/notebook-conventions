@@ -4,7 +4,7 @@
   # .scions/knowledge-base-kit is a git submodule (graft v2.13.0)
   inputs.self.submodules = true;
   inputs = {
-    graft.url = "github:danielnaab/graft/v2.13.0";
+    graft.url = "github:danielnaab/graft/v2.13.1";
     nixpkgs.follows = "graft/nixpkgs";
   };
 
