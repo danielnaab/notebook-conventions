@@ -6,7 +6,8 @@
 #   import? ".scions/notebook-kit/tools/kit.just"
 #
 # `import?` (optional): a fresh clone whose scions are not filled yet (git submodule update --init) still lists the
-# workspace's own recipes. A flake in a subdirectory imports from its scions directory, e.g.
+# workspace's own recipes, unless one of them lists a recipe from here as a dependency (then `just` rejects the
+# file): call these from a recipe's body instead. A flake in a subdirectory imports from its scions directory, e.g.
 # "nix/agent-tools/.scions/notebook-kit/tools/kit.just".
 # `just` lists every recipe by group. Recipes run from the workspace root, so paths are repository-relative,
 # and flags pass straight through: `just index --check`, `just move OLD NEW --dry-run`.

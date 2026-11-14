@@ -36,7 +36,8 @@ release tag and lets it wire itself into the workspace's flake. The kit's Nix ar
 ### Upgrading
 
 This release needs graft v2.13.0 and knowledge-base-kit grafted beside the kit. Do it in the same change as graft's
-own v2.13.0 **Upgrading** steps (graft's CHANGELOG.md), which turn the copied scions into git submodules.
+own v2.13.0 **Upgrading** steps (graft's CHANGELOG.md), which turn the copied scions into git submodules. Coming
+from a release before v1.4.0, apply the Upgrading steps of every release you skip as well (below), oldest first.
 
 1. On a branch, follow graft v2.13.0's Upgrading steps. Graft the kit at this release and the checker beside it,
    into the scions directory your justfile imports from (`.scions` at the top; for a flake in a subdirectory,
@@ -67,11 +68,21 @@ own v2.13.0 **Upgrading** steps (graft's CHANGELOG.md), which turn the copied sc
 3. Create `notebook-kit.yaml` if step 2 did not (copy `.scions/notebook-kit/seed/common/notebook-kit.yaml`): without
    it the flake has no task check. Add `notebook-kit.yaml` to `knowledge-base.yaml`'s `askFirst` list if you keep one.
 4. In the `justfile`, make the import optional and point it at the scion: `import? ".scions/notebook-kit/tools/kit.just"`
-   (or `import? "nix/agent-tools/.scions/notebook-kit/tools/kit.just"`).
+   (or `import? "nix/agent-tools/.scions/notebook-kit/tools/kit.just"`). `import?` keeps `just` working while the
+   scion is empty only if no recipe of the workspace lists an imported recipe as a dependency: with
+   `check-local: meeting-check` (or any kit recipe), `just` rejects the whole file ("unknown dependency"). Call it
+   from the body instead:
+
+   ```just
+   check-local: typecheck   # the workspace's own recipes may stay dependencies
+       @{{just_executable()}} --justfile {{quote(justfile())}} meeting-check
+   ```
 5. If anything runs the kit's tools by name outside `just` (`nix run .#index`, `.local/tools/bin/move`, scripts,
    agent instructions): `index` → `nb-index`, `move` → `nb-move`, `convert` → `nb-convert`. `just index`,
    `just move` and `just convert` are unchanged; a `kit_run` template (`"{}"`, `".local/tools/bin/{}"`) needs no change.
-6. Point `.githooks/pre-commit`, `.pi/settings.json` (`skills`) and links at the kit's scion if its path changed;
+6. Point `.githooks/pre-commit`, `.pi/settings.json` (`skills`), `knowledge-base.yaml` (each `imports[].path`, and
+   the scions directory in `rules.writes.deny`, e.g. `.scions/**` → `nix/agent-tools/.scions/**`) and links at the
+   kit's scion if its path changed;
    the seed's wrapper (`.scions/notebook-kit/seed/common/.githooks/pre-commit`) also says what to do when the
    scion is empty. Replace AGENTS.md's "Never edit `.scions/`; it is graft output" with the seed's scions rule.
 7. If your dev shell relied on git, ripgrep or Python from the kit, add them with `perSystem`

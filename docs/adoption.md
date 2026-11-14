@@ -47,7 +47,9 @@ This needs [graft](https://github.com/danielnaab/graft) v2.13.0 or later, Nix 2.
 
 A fresh clone's `.scions/` folders are empty until `git submodule update --init` (or `just sync`): Nix fetches the
 scions itself, but `just` reads the kit's menu, and the hook the kit's script, from the folders. The seeded
-`justfile` imports the menu with `import?`, so it still lists the workspace's own recipes before then.
+`justfile` imports the menu with `import?`, so it still lists the workspace's own recipes before then, as long as
+no workspace recipe lists a kit recipe as a dependency (`just` then rejects the whole file): call kit recipes from
+a recipe's body, `@{{just_executable()}} --justfile {{quote(justfile())}} RECIPE`.
 
 ## What the workspace references in place
 
