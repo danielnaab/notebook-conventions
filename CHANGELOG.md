@@ -1,5 +1,87 @@
 # Changelog
 
+## v2.0.0 - 2026-11-13
+
+For [graft](https://github.com/danielnaab/graft) v2.13.0, which grafts each repository as a git submodule at a
+release tag and lets it wire itself into the workspace's flake. The kit's Nix arguments become a settings file.
+
+### Changed
+
+- **`graft.nix` replaces `nix/workspace.nix`** (removed). A workspace that grafts the kit (and knowledge-base-kit,
+  which it requires) gets, with no code in its `flake.nix`: the tools in `packages.<system>.tools` and the dev
+  shell, an app per tool, `packages.<system>.obsidian-plugins`, and the task check, now
+  `checks.<system>.notebook-kit-tasks`.
+- **Settings move to `notebook-kit.yaml`** at the workspace's top, read when a tool runs
+  ([workspace settings](docs/adoption.md#workspace-settings)): `obsidian` (was the `obsidian` argument),
+  `tasks: false` (was `withTasks = false`). The task check runs when the flake's source has a `notebook-kit.yaml`,
+  so a flake in a subdirectory gets none (as with `flakeDir` before). `extraPackages` is gone: graft's
+  `perSystem` adds the workspace's own tools. `flakeDir` and `systems` are gone: graft derives both.
+- **Tools renamed** so they cannot shadow other commands on `PATH`: `index` → `nb-index`, `move` → `nb-move`,
+  `convert` → `nb-convert` (apps and `bin/` alike). The `just` recipes keep their names (`just index`, `just move`,
+  `just convert`).
+- **The kit is found by graft's marker README**, not at a fixed `.scions/`: the pre-commit hook leaves out the
+  scions directory wherever it is, and `upgrade-obsidian` reads the old seed from the kit's submodule at the release
+  the base ref records (and still from a copied scion, for the upgrade from v1.x).
+- **The identity snippet's header** names `notebook-kit.yaml`. `upgrade-obsidian` re-renders `vault-identity.css`
+  once and still recognizes the old header.
+- **The dev shell** is graft's default: the tools package (every kit tool, `just`, `markdownlint-cli2`). It no
+  longer adds git, ripgrep and Python.
+- **Seed:** `flake.nix` names no provider (`inputs.self.submodules = true`, graft v2.13.0, `dir = ".scions"`);
+  `justfile` imports the menu with `import?`, so a fresh clone lists its own recipes before its scions are filled;
+  a seeded `notebook-kit.yaml`; the hook wrapper says to run `git submodule update --init` when the kit is missing;
+  AGENTS.md's scions rule.
+- The kit's own `.scions/knowledge-base-kit` is a git submodule (v2.2.0), and its flake takes its tools from
+  `graft.nix`.
+
+### Upgrading
+
+This release needs graft v2.13.0 and knowledge-base-kit grafted beside the kit. Do it in the same change as graft's
+own v2.13.0 **Upgrading** steps (graft's CHANGELOG.md), which turn the copied scions into git submodules.
+
+1. On a branch, follow graft v2.13.0's Upgrading steps. Graft the kit at this release and the checker beside it,
+   into the scions directory your justfile imports from (`.scions` at the top; for a flake in a subdirectory,
+   under it, e.g. `--scions nix/agent-tools/.scions`):
+   `nix run github:danielnaab/graft/v2.13.0 -- add --scions .scions https://github.com/danielnaab/knowledge-base-kit@v2.2.0`
+   and `… add https://github.com/danielnaab/notebook-kit@v2.0.0`.
+2. In `flake.nix`, delete the `knowledge-base-kit` and `notebook-kit` inputs and the
+   `import "${inputs.notebook-kit}/nix/workspace.nix" { … }` call; delete `outputs = workspace` (or the `workspace //`
+   in it). Move each argument it had:
+   - `obsidian = { settings."app.json".openBehavior = "file"; identity = { label = "A"; accent = { light = "#155fc8"; dark = "#6ea8f5"; }; stripe = [ "#155fc8" "#cf4a02" ]; }; };`
+     becomes, in `notebook-kit.yaml` at the repository's top:
+
+     ```yaml
+     obsidian:
+       settings:
+         app.json:
+           openBehavior: file
+       identity:
+         label: A
+         accent: { light: "#155fc8", dark: "#6ea8f5" }
+         stripe: ["#155fc8", "#cf4a02"]
+     ```
+
+   - `withTasks = false;` becomes `tasks: false` in `notebook-kit.yaml`.
+   - `extraPackages = pkgs: [ pkgs.uv bun ];` becomes mkFlake's
+     `perSystem = { pkgs, ... }: { tools = { inherit (pkgs) uv; bun = …; }; };` (one name per package).
+   - `flakeDir` and `systems`: delete them.
+3. Create `notebook-kit.yaml` if step 2 did not (copy `.scions/notebook-kit/seed/common/notebook-kit.yaml`): without
+   it the flake has no task check. Add `notebook-kit.yaml` to `knowledge-base.yaml`'s `askFirst` list if you keep one.
+4. In the `justfile`, make the import optional and point it at the scion: `import? ".scions/notebook-kit/tools/kit.just"`
+   (or `import? "nix/agent-tools/.scions/notebook-kit/tools/kit.just"`).
+5. If anything runs the kit's tools by name outside `just` (`nix run .#index`, `.local/tools/bin/move`, scripts,
+   agent instructions): `index` → `nb-index`, `move` → `nb-move`, `convert` → `nb-convert`. `just index`,
+   `just move` and `just convert` are unchanged; a `kit_run` template (`"{}"`, `".local/tools/bin/{}"`) needs no change.
+6. Point `.githooks/pre-commit`, `.pi/settings.json` (`skills`) and links at the kit's scion if its path changed;
+   the seed's wrapper (`.scions/notebook-kit/seed/common/.githooks/pre-commit`) also says what to do when the
+   scion is empty. Replace AGENTS.md's "Never edit `.scions/`; it is graft output" with the seed's scions rule.
+7. If your dev shell relied on git, ripgrep or Python from the kit, add them with `perSystem`
+   (`devShells.default = pkgs.mkShell { packages = [ … ]; }`, plus the tools package if you want it there).
+8. With Obsidian closed: `just upgrade-obsidian`. A workspace with an `identity` gets `vault-identity.css`
+   re-rendered (its header now names `notebook-kit.yaml`); commit it.
+9. Verify: `just check`, `nix flake check` (`nix flake check path:DIR` for a flake in a subdirectory),
+   `nix build .#tools` lists `nb-index`. Commit the scions, `flake.nix`, `flake.lock`, `notebook-kit.yaml` and
+   the rest together.
+
 ## v1.4.0 - 2026-11-13
 
 ### Added
