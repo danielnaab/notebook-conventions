@@ -57,7 +57,7 @@ SHA-256 of each release asset.
   plugin reaches every workspace with its settings. It installs only the pinned plugins the vault's
   `community-plugins.json` lists: a workspace whose boundaries rule a plugin out removes it there, and the kit's
   later upgrades keep that removal. `--no-plugins` merges settings only.
-- The releases come from the kit's Nix wiring (`packages.obsidian-plugins` in `nix/workspace.nix`), which
+- The releases come from the kit's Nix wiring (`packages.obsidian-plugins` from the kit's [`graft.nix`](../graft.nix)), which
   downloads each pinned asset and checks its SHA-256; the tool checks them again before copying. It writes
   `main.js`, `manifest.json`, and `styles.css` (where the release has one) and leaves `data.json` alone. A plugin
   that already matches its pin, including the in-app installer's copy (see below), is left as it is.
@@ -106,33 +106,31 @@ old scion until the upgrade is committed), the current seed, and the vault's cop
   seed matches the current one and a file still differs.
 
 A preference meant for every workspace goes into the kit's seed first and is then released. A setting only one
-workspace wants is declared in that workspace's flake ([declared deviations](#declared-deviations)); one left
+workspace wants is declared in that workspace's `notebook-kit.yaml` ([declared deviations](#declared-deviations)); one left
 undeclared is listed as changed, as a reminder.
 
 ### Declared deviations
 
-A workspace states where its settings deliberately differ from the seed in the `obsidian` argument it passes to
-[`nix/workspace.nix`](../nix/workspace.nix). The base stays in the scion; the deviations are a few lines of Nix the
-workspace owns, so two workspaces on the same kit share everything else.
+A workspace states where its settings deliberately differ from the seed under `obsidian` in its
+`notebook-kit.yaml` at the workspace's top ([workspace settings](adoption.md#workspace-settings)). The base stays in
+the scion; the deviations are a few lines the workspace owns, so two workspaces on the same kit share everything
+else.
 
-```nix
-workspace = import "${inputs.notebook-kit}/nix/workspace.nix" {
-  inherit inputs flakeDir;
-  obsidian = {
-    settings."app.json".openBehavior = "file";   # settings file -> keys overlaid on the seed
-    identity = {
-      label = "Workspace A";
-      accent = { light = "#3366cc"; dark = "#99bbff"; };
-      stripe = [ "#3366cc" "#ffffff" "#cc6633" ];
-    };
-  };
-};
+```yaml
+obsidian:
+  settings:
+    app.json:                  # settings file -> keys overlaid on the seed
+      openBehavior: file
+  identity:
+    label: Workspace A
+    accent: { light: "#3366cc", dark: "#99bbff" }
+    stripe: ["#3366cc", "#ffffff", "#cc6633"]
 ```
 
 - `settings` maps a settings file under `.obsidian/` to the keys it overrides. Objects overlay key by key; a list
   of plain values gains the declared items.
 - `identity` tells vaults apart when several are open at once. `accent` is a single CSS color (the existing
-  behavior), or `{ light = "#3366cc"; dark = "#99bbff"; }` with both colors in `#RRGGBB` form. Variants follow
+  behavior), or `{ light: "#3366cc", dark: "#99bbff" }` with both colors in `#RRGGBB` form. Variants follow
   Obsidian's active theme, including system-driven changes; there is no separate toggle. The light color is the
   static `appearance.json` fallback. Generated CSS overrides the accent HSL/base/hover variables per theme;
   hover darkens in light mode and lightens in dark mode, with black/white control text chosen for contrast.
@@ -143,7 +141,7 @@ workspace = import "${inputs.notebook-kit}/nix/workspace.nix" {
   accent or light variant, constant across modes; hex colors get contrasting black/white text. Long labels truncate.
   The kit does not force a hidden status bar to show, add a mobile badge, or overlay note/window controls.
   CSS-generated text is a visual cue, not a reliable semantic label for screen readers or a security marking.
-- All identity styling is rendered into `vault-identity.css` and enabled in `appearance.json`. Change the flake,
+- All identity styling is rendered into `vault-identity.css` and enabled in `appearance.json`. Change `notebook-kit.yaml`,
   not the generated CSS. Check actual link, hover, focus, and control contrast against editor/sidebar backgrounds
   in both modes (4.5:1 for normal text); custom themes can override appearance. There is no blanket accessibility
   guarantee or full theme replacement.
@@ -151,9 +149,8 @@ workspace = import "${inputs.notebook-kit}/nix/workspace.nix" {
   vault, and reports each as `declare`. Removing `identity` removes the snippet it rendered.
 - `check-obsidian` compares the vault with the seed plus the declarations. A file that matches is `same` and
   names the declared keys; anything else is still `changed`, so `--strict` means undeclared drift.
-- The Nix wiring writes the declaration to a JSON file and passes it to both tools as `$OBSIDIAN_WORKSPACE`.
-  After changing it, rebuild the tools (the workspace's `kit_run`), then run `just upgrade-obsidian` with
-  Obsidian closed.
+- Both tools read `notebook-kit.yaml` when they run, so a change needs no rebuild: run `just upgrade-obsidian`
+  with Obsidian closed.
 
 ### Moving the vault
 
@@ -201,5 +198,5 @@ flake is in a subdirectory puts the tools on `PATH`
 - [Pinned plugin releases](obsidian-plugins.json), checked against the GitHub release assets
 - [Seed Obsidian settings](../seed/common/notebook/.obsidian/app.json)
 - [Settings drift check](../tools/check-obsidian.py) and [settings upgrade](../tools/upgrade-obsidian.py)
-- [Workspace flake wiring](../nix/workspace.nix), which passes the declared deviations to both
+- [Workspace settings reader](../tools/kit_settings.py): both tools read the declared deviations from `notebook-kit.yaml`
 - [Pre-commit hook](../tools/hooks/pre-commit)

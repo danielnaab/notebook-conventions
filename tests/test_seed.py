@@ -1,7 +1,7 @@
 """Build a workspace from seed/ the way docs/adoption.md says, then run every check on it.
 
-Fixtures are synthetic. The scions are simulated by copying the kit's exported directories and its own
-grafted knowledge-base-kit, so no network is needed. Its checker comes from KBI_SRC (skipped if unset).
+Fixtures are synthetic. The scions (git submodules in a real workspace) are simulated by copying the kit's
+directories and its own grafted knowledge-base-kit, so no network is needed. Its checker comes from KBI_SRC (skipped if unset).
 """
 
 import json
@@ -15,7 +15,7 @@ import unittest
 from pathlib import Path
 
 KIT = Path(__file__).resolve().parents[1]
-EXPORTED = ("docs", "templates", "skills", "tools", "nix", "seed")
+EXPORTED = ("docs", "templates", "skills", "tools", "seed")
 PLACEHOLDER = re.compile(r"<<([A-Z_]+)>>")
 VALUES = {
     "WORKSPACE_NAME": "Example Workspace",
@@ -38,10 +38,11 @@ def build_workspace(root: Path) -> None:
     scion.mkdir(parents=True)
     for name in EXPORTED:
         shutil.copytree(KIT / name, scion / name)
-    for name in ("README.md", "CHANGELOG.md"):
+    for name in ("README.md", "CHANGELOG.md", "graft.nix"):
         if (KIT / name).exists():
             shutil.copy2(KIT / name, scion / name)
-    shutil.copytree(KIT / ".scions" / "knowledge-base-kit", root / ".scions" / "knowledge-base-kit")
+    shutil.copytree(KIT / ".scions" / "knowledge-base-kit", root / ".scions" / "knowledge-base-kit",
+                    ignore=shutil.ignore_patterns(".git"))
     shutil.copy2(KIT / ".scions" / "README.md", root / ".scions" / "README.md")
     for template in (scion / "templates").glob("*.md"):
         shutil.copy2(template, root / "notebook/templates" / template.name)
@@ -75,19 +76,29 @@ class SeedTest(unittest.TestCase):
             if path.is_file() and ".scions" not in path.parts and ".obsidian" not in path.parts:
                 self.assertIsNone(PLACEHOLDER.search(path.read_text()), path)
 
-    def test_seed_pins_the_release_it_ships_in(self):
+    def test_adoption_grafts_the_release_it_ships_in(self):
         newest = re.search(r"^## (v[0-9.]+)", (KIT / "CHANGELOG.md").read_text(), re.M).group(1)
-        self.assertIn(f"notebook-kit/{newest}\"", (KIT / "seed/common/flake.nix").read_text())
+        self.assertIn(f"notebook-kit@{newest}", (KIT / "docs/adoption.md").read_text())
 
     def test_seed_pins_the_graft_the_kit_uses(self):
         pin = re.search(r"danielnaab/graft/v[0-9.]+", (KIT / "flake.nix").read_text()).group(0)
         self.assertIn(pin, (KIT / "seed/common/flake.nix").read_text())
 
-    def test_flake_reads_the_wiring_from_the_pinned_kit(self):
-        # From the input, not .scions/, so the dev shell and checks exist before the first graft.
+    def test_flake_names_no_provider(self):
+        # The scions are git submodules; each wires itself (graft.nix), so the flake has no provider inputs.
         flake = (self.root / "flake.nix").read_text()
-        self.assertIn('import "${inputs.notebook-kit}/nix/workspace.nix"', flake)
+        self.assertIn("inputs.self.submodules = true;", flake)
+        self.assertIn('dir = ".scions";', flake)
+        self.assertNotIn("flake = false", flake)
+        self.assertNotIn("notebook-kit", flake.split("outputs")[1])
         self.assertEqual("use flake\n", (self.root / ".envrc").read_text())
+
+    def test_settings_file_is_seeded_with_the_defaults(self):
+        sys.path.insert(0, str(KIT / "tools"))
+        import kit_settings
+        import obsidian_settings
+        self.assertEqual(True, kit_settings.load(self.root)["tasks"])
+        self.assertEqual({"settings": {}}, obsidian_settings.workspace_config(self.root))
 
     def test_task_check_passes_on_empty_workspace(self):
         proc = self.run_tool(str(KIT / "tools/check-tasks.py"), "--root", str(self.root))
@@ -130,14 +141,33 @@ class SeedTest(unittest.TestCase):
 
     def test_hook_wrapper_is_executable_and_runs_the_kit_hook(self):
         wrapper = self.root / ".githooks/pre-commit"
-        self.assertTrue(os.access(wrapper, os.X_OK), "graft drops the exec bit in .scions/, so the wrapper must have it")
+        self.assertTrue(os.access(wrapper, os.X_OK), "git runs the wrapper itself, so it must be executable")
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.root, check=True)
         proc = subprocess.run([str(wrapper)], cwd=self.root, capture_output=True, text=True)
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)  # no staged Markdown: exits 0
+        # a fresh clone before `git submodule update --init`: the scion is an empty folder
+        shutil.rmtree(self.root / ".scions/notebook-kit")
+        (self.root / ".scions/notebook-kit").mkdir()
+        proc = subprocess.run([str(wrapper)], cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(1, proc.returncode)
+        self.assertIn("git submodule update --init", proc.stderr)
 
     def test_hook_skips_staged_scion_markdown(self):
-        # Explicit paths bypass markdownlint's ignores, so the hook must not pass .scions/ files at all:
-        # the scion's seed links resolve only inside a workspace, and every graft upgrade stages .scions/.
+        # Explicit paths bypass markdownlint's ignores, so the hook must not pass scion files at all: the scion's
+        # seed links resolve only inside a workspace. The scions directory is the one graft's marker README names.
+        self.assertEqual(["--no-globs", "README.md"], self.staged_lint_args(".scions"))
+
+    def test_hook_skips_a_scions_directory_under_a_subdirectory_flake(self):
+        shutil.move(self.root / ".scions", self.root / "nix-tools")
+        (self.root / "nix/agent-tools").mkdir(parents=True)
+        shutil.move(self.root / "nix-tools", self.root / "nix/agent-tools/.scions")
+        justfile = self.root / "justfile"
+        justfile.write_text(justfile.read_text().replace('".scions/', '"nix/agent-tools/.scions/'))
+        self.assertEqual(["--no-globs", "README.md"], self.staged_lint_args("nix/agent-tools/.scions"))
+
+    def staged_lint_args(self, scions):
+        hook = self.root / ".hook"
+        shutil.copy2(KIT / "tools/hooks/pre-commit", hook)
         stubs = self.root / ".stubs"
         stubs.mkdir()
         record = self.root / ".lint-args"
@@ -146,11 +176,12 @@ class SeedTest(unittest.TestCase):
         for stub in stubs.iterdir():
             stub.chmod(0o755)
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.root, check=True)
-        subprocess.run(["git", "add", "README.md", ".scions/notebook-kit/README.md"], cwd=self.root, check=True)
-        proc = subprocess.run([str(self.root / ".githooks/pre-commit")], cwd=self.root, capture_output=True,
+        subprocess.run(["git", "add", "README.md", f"{scions}/README.md", f"{scions}/notebook-kit/README.md"],
+                       cwd=self.root, check=True)
+        proc = subprocess.run(["sh", str(hook)], cwd=self.root, capture_output=True,
                               text=True, env={**os.environ, "PATH": f"{stubs}{os.pathsep}{os.environ['PATH']}"})
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
-        self.assertEqual(["--no-globs", "README.md"], record.read_text().split())
+        return record.read_text().split()
 
     def test_hook_never_runs_nix_without_a_root_flake(self):
         # A workspace whose flake is in a subdirectory: with no tools on PATH the hook says so, and never runs nix.
@@ -202,7 +233,7 @@ class JustMenuTest(unittest.TestCase):
         self.stubs = self.root / ".stubs"
         self.stubs.mkdir()
         self.log = self.root / ".calls"
-        for name in ("check-kb", "check-tasks", "check-templates", "check-obsidian", "index", "move", "convert",
+        for name in ("check-kb", "check-tasks", "check-templates", "check-obsidian", "nb-index", "nb-move", "nb-convert",
                      "upgrade-obsidian", "graft"):
             stub = self.stubs / name
             stub.write_text(f'#!/bin/sh\n{{ printf {name}; for a; do printf "\\037%s" "$a"; done; echo; }} >> "{self.log}"\n')
@@ -246,15 +277,25 @@ class JustMenuTest(unittest.TestCase):
     def test_check_runs_every_kit_check(self):
         proc = self.just("check")
         self.assertEqual(0, proc.returncode, proc.stderr)
-        self.assertEqual([["graft", "check"], ["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"]],
-                         self.calls())
+        self.assertEqual([["graft", "check"], ["check-kb"], ["check-tasks"], ["nb-index", "--check"],
+                          ["check-obsidian"]], self.calls())
+
+    def test_an_empty_scion_still_lists_the_workspace_recipes(self):
+        # a fresh clone before `git submodule update --init`: `import?` skips the kit's menu
+        shutil.rmtree(self.root / ".scions/notebook-kit")
+        (self.root / ".scions/notebook-kit").mkdir()
+        with (self.root / "justfile").open("a") as justfile:
+            justfile.write("\n# A workspace recipe\nmine:\n    @echo mine\n")
+        proc = self.just()
+        self.assertEqual(0, proc.returncode, proc.stderr)
+        self.assertIn("mine", proc.stdout)
 
     def test_arguments_pass_through_intact(self):
         proc = self.just("move", "notebook/a b.md", "notebook/c.md", "--dry-run", cwd=self.root / "notebook")
         self.assertEqual(0, proc.returncode, proc.stderr)
         self.just("index", "--check")
         self.just("changelog", "notebook-kit")
-        self.assertEqual([["move", "notebook/a b.md", "notebook/c.md", "--dry-run"], ["index", "--check"],
+        self.assertEqual([["nb-move", "notebook/a b.md", "notebook/c.md", "--dry-run"], ["nb-index", "--check"],
                           ["graft", "changelog", "notebook-kit"]], self.calls())
 
     def test_sync_runs_graft_bare_and_upgrade_applies_obsidian_and_lists_next_steps(self):
@@ -273,8 +314,8 @@ class JustMenuTest(unittest.TestCase):
                            f'\ncheck-local:\n    @echo local >> "{self.log}"\n')
         proc = self.just("check", env=env)
         self.assertEqual(0, proc.returncode, proc.stderr)
-        self.assertEqual([["graft", "check"], ["check-kb"], ["check-tasks"], ["index", "--check"], ["check-obsidian"],
-                          ["local"]], self.calls())
+        self.assertEqual([["graft", "check"], ["check-kb"], ["check-tasks"], ["nb-index", "--check"],
+                          ["check-obsidian"], ["local"]], self.calls())
         self.just("outdated", env=env)
         self.assertEqual(["graft", "outdated"], self.calls()[-1])
 
@@ -283,9 +324,15 @@ class JustMenuTest(unittest.TestCase):
         if not kbi:
             self.skipTest("KBI_SRC not set")
         tools = self.root / ".scions/notebook-kit/tools"
+        # each tool by its name in graft.nix, as the tools package has it
+        bin_ = self.root / ".bin"
+        bin_.mkdir()
+        for name, script in (("check-kb", "check-kb"), ("check-tasks", "check-tasks"), ("nb-index", "index"),
+                             ("check-obsidian", "check-obsidian")):
+            (bin_ / name).write_text(f'#!/bin/sh\nexec "{sys.executable}" "{tools}/{script}.py" "$@"\n')
+            (bin_ / name).chmod(0o755)
         # graft check needs the workspace's flake; its own tests cover it
-        env = {**os.environ, "KIT_RUN": f"{sys.executable} {tools}/{{}}.py", "GRAFT_RUN": "true",
-               "PYTHONDONTWRITEBYTECODE": "1"}
+        env = {**os.environ, "KIT_RUN": f"{bin_}/{{}}", "GRAFT_RUN": "true", "PYTHONDONTWRITEBYTECODE": "1"}
         proc = self.just("check", env=env)
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
         self.assertIn("all checks passed", proc.stdout)

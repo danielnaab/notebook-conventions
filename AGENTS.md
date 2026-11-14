@@ -22,5 +22,6 @@ pin it as a graft scion. Read [README.md](README.md), then [KB configuration](kn
 - **Docs follow knowledge-base-kit:** `status` frontmatter, `## Sources`, real relative links. Keep policy-style text short.
 - **Verify:** `nix flake check` runs the tests (tool tests, a workspace built from `seed/`, and the hygiene scan);
   `nix run .#check-kb` checks links, status, and Sources here. Tests need no network.
-- `.scions/` is graft output; never edit it. Upgrade inputs with `nix run .#graft upgrade`.
+- `.scions/` holds git submodules at release tags (knowledge-base-kit); don't commit edits there. Upgrade with
+  `nix run .#graft upgrade`. The kit's own tools come from [graft.nix](graft.nix), as every workspace gets them.
 - Do not push, tag, or publish without the owner's authorization.

@@ -1,5 +1,5 @@
-# What graft exports to consumers (.scions/notebook-kit): reference content, tools, nix
-# wiring, and the seed. Everything below is development of this repository.
+# What `git archive` exports: reference content, tools, graft.nix, and the seed. graft v2.13.0 and later
+# graft the whole repository (a git submodule at a release tag) and ignore these lines.
 /.scions export-ignore
 /.gitattributes export-ignore
 /.gitignore export-ignore

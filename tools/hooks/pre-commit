@@ -2,24 +2,28 @@
 # Block commits whose staged Markdown breaks the heading-spacing rule the vault's Obsidian Linter
 # enforces, or that break links, lifecycle status, or Sources sections (just check-kb).
 # Fix formatting with: markdownlint-cli2 --fix <files>
-# Run it through the workspace's .githooks/pre-commit wrapper (graft drops the executable bit in .scions/).
+# Run it through the workspace's .githooks/pre-commit wrapper, which finds the kit in its scions directory.
 # Enable once per clone: git config core.hooksPath .githooks
 set -eu
 cd "$(git rev-parse --show-toplevel)"
 
-# Collect staged Markdown paths as positional args (paths without newlines). .scions/ is graft output: its seed
-# links resolve only inside a workspace, and explicit paths bypass markdownlint's ignores, so leave it out.
+# Collect staged Markdown paths as positional args (paths without newlines), leaving out the scions directory
+# (the folder whose README.md carries graft's marker; .scions/ at the top, or under a flake in a subdirectory):
+# a scion's seed links resolve only inside a workspace, and explicit paths bypass markdownlint's ignores.
 IFS='
 '
 # shellcheck disable=SC2046
-set -- $(git diff --cached --name-only --diff-filter=ACM -- '*.md' ':!.scions')
+set -- $(git grep --cached -l -F '<!-- managed by graft: https://github.com/danielnaab/graft -->' \
+  -- README.md '*/README.md' 2>/dev/null | sed -n 's|README\.md$||; s|/$||; /^$/d; s|^|:!|p' || true)
+# shellcheck disable=SC2046
+set -- $(git diff --cached --name-only --diff-filter=ACM -- '*.md' "$@")
 [ "$#" -gt 0 ] || exit 0
 
 # Without the tools on PATH, fall back to the root flake's dev shell; a workspace whose flake is in a subdirectory
 # (its content kept out of the Nix store) puts them on PATH instead, with direnv or the tools package.
 no_tools() {
   echo "pre-commit: $1 is not on PATH and there is no flake.nix at the top; put the kit's tools on PATH" >&2
-  echo "  (.scions/notebook-kit/docs/adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store)" >&2
+  echo "  (notebook-kit's docs/adoption.md#a-workspace-whose-content-must-not-enter-the-nix-store)" >&2
   exit 1
 }
 if command -v markdownlint-cli2 >/dev/null 2>&1; then

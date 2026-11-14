@@ -1,0 +1,16 @@
+# Settings for notebook-kit's tools in this workspace, read when a tool runs. Every key is optional.
+# Docs: .scions/notebook-kit/docs/adoption.md#workspace-settings
+
+# false: this workspace keeps no task records (check-tasks and the flake's task check skip).
+tasks: true
+
+# Where this vault's Obsidian settings deliberately differ from the kit's seed (docs/obsidian.md#declared-deviations).
+obsidian:
+  settings: {}
+  # settings:
+  #   app.json:
+  #     openBehavior: file
+  # identity:                      # a window stripe and optional status-bar badge, to tell vaults apart
+  #   label: Workspace A
+  #   accent: { light: "#3366cc", dark: "#99bbff" }
+  #   stripe: ["#3366cc", "#cc6633"]

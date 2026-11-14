@@ -20,6 +20,6 @@ _Nothing yet._
 | [Local conventions](docs/conventions.md) | Local rules and knowledge-base-kit conformance, extending the pinned kit. |
 | [KB configuration](knowledge-base.yaml) | Layer and authority declarations and check scopes. |
 
-The shared conventions live in [notebook-kit](.scions/notebook-kit/docs/README.md), a pinned graft
-dependency. Daily → session → wiki is the browsing path, but a session is not mandatory for every interaction.
+The shared conventions live in [notebook-kit](.scions/notebook-kit/docs/README.md), grafted at a release
+tag (a git submodule: run `git submodule update --init` in a fresh clone). Daily → session → wiki is the browsing path, but a session is not mandatory for every interaction.
 Folder `index.md` files are generated: `just index`. Run `just` to list every operation.

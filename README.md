@@ -15,8 +15,8 @@ place, and copies a small `seed/` once.
 | [docs/](docs/README.md) | The conventions: layout, workflow, tasks, conformance, Obsidian, adoption; pinned Obsidian plugins. |
 | [templates/](templates/) | Canonical daily, session, wiki, and task-record note templates. |
 | [skills/](skills/) | Generic agent skills `notebook-start` and `notebook-wrap`. |
-| [tools/](tools/) | `check-tasks`, `check-kb`, `check-templates`, `check-obsidian`, `upgrade-obsidian`, `index`, `move`, `convert`, a pre-commit hook, and the `just` menu `kit.just`. |
-| [nix/workspace.nix](nix/workspace.nix) | Flake wiring: dev shell, tool apps, a `tools` package, task check. |
+| [tools/](tools/) | `check-tasks`, `check-kb`, `check-templates`, `check-obsidian`, `upgrade-obsidian`, `index`, `move`, `convert` (the tools `nb-index`, `nb-move`, `nb-convert`), a pre-commit hook, and the `just` menu `kit.just`. |
+| [graft.nix](graft.nix) | What a workspace that grafts the kit gets in its flake ([graft](https://github.com/danielnaab/graft) v2.13.0): the tools and an app for each, the pinned Obsidian plugins, the task check. Its settings are in `notebook-kit.yaml`. |
 | [seed/](seed/common/) | Files a workspace copies once and then owns. |
 | [LICENSE](LICENSE) | CC0 1.0 Universal. |
 | [tests/](tests/) | Tool tests and a test that builds a workspace from the seed and runs every check. |

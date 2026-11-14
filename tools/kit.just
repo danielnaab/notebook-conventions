@@ -3,13 +3,16 @@
 #
 #   set allow-duplicate-variables   # lets the workspace override kit_run and graft_run below
 #   set allow-duplicate-recipes     # lets the workspace define check-local (and override any recipe)
-#   import ".scions/notebook-kit/tools/kit.just"
+#   import? ".scions/notebook-kit/tools/kit.just"
 #
+# `import?` (optional): a fresh clone whose scions are not filled yet (git submodule update --init) still lists the
+# workspace's own recipes. A flake in a subdirectory imports from its scions directory, e.g.
+# "nix/agent-tools/.scions/notebook-kit/tools/kit.just".
 # `just` lists every recipe by group. Recipes run from the workspace root, so paths are repository-relative,
 # and flags pass straight through: `just index --check`, `just move OLD NEW --dry-run`.
 # Docs: .scions/notebook-kit/docs/adoption.md#run-operations-with-just
 
-# How a kit tool runs: `{}` becomes the tool's name (check-kb, index, ...), and the recipe's arguments follow.
+# How a kit tool runs: `{}` becomes the tool's name (check-kb, nb-index, ...), and the recipe's arguments follow.
 # Override with the KIT_RUN environment variable or `kit_run := "..."` in the workspace justfile, e.g.
 # "{}" (tools on PATH), ".local/tools/bin/{}", or "nix run path:nix/tools#{} --".
 kit_run := env("KIT_RUN", "nix run .#{} --")
@@ -26,7 +29,7 @@ check: graft-check check-kb check-tasks (index "--check") check-obsidian check-l
 [private]
 check-local:
 
-# Check that .scions/ (as git would commit it) and graft's workflows match the pins
+# Check that every scion is clean and at a release tag, and graft's workflows are current
 [group('check')]
 [positional-arguments]
 graft-check *args:
@@ -60,13 +63,13 @@ check-obsidian *args:
 [group('notes')]
 [positional-arguments]
 index *args:
-    {{replace(kit_run, "{}", "index")}} "$@"
+    {{replace(kit_run, "{}", "nb-index")}} "$@"
 
 # Move a note or folder and rewrite the links to and from it (paths from the repository root; --dry-run)
 [group('notes')]
 [positional-arguments]
 move old new *flags:
-    {{replace(kit_run, "{}", "move")}} "$@"
+    {{replace(kit_run, "{}", "nb-move")}} "$@"
 
 # Show the pinned and newest tag of each scion
 [group('deps')]
@@ -80,8 +83,8 @@ outdated *args:
 changelog *names:
     {{graft_run}} changelog "$@"
 
-# Move scion pins (e.g. notebook-kit@vX.Y.Z), rebuild .scions/, apply the kit's Obsidian settings and
-# plugins (upgrade-obsidian), then list the next steps
+# Move scions to newer release tags (e.g. notebook-kit@vX.Y.Z), apply the kit's Obsidian settings and plugins
+# (upgrade-obsidian), then list the next steps
 [group('deps')]
 [positional-arguments]
 upgrade *targets:
@@ -95,15 +98,15 @@ upgrade *targets:
     @echo "  1. Read each upgraded scion's CHANGELOG.md, its Upgrading sections in particular: just changelog"
     @echo "  2. Brief an agent or yourself on what moved:                                       just migrate"
     @echo "  3. Apply the Upgrading steps, then verify:                                          just check"
-    @echo "  4. Commit the flake (flake.nix, flake.lock), .scions/, and the workspace changes together."
+    @echo "  4. Commit the moved scions, flake.nix and flake.lock (graft's pin), and the workspace changes together."
 
-# Print a migration brief for an upgrade: what moved, the changelog text, the scion diff
+# Print a migration brief for an upgrade: what moved, the changelog text, the provider's changes
 [group('deps')]
 [positional-arguments]
 migrate *args:
     {{graft_run}} migrate "$@"
 
-# Rebuild .scions/ from the pins in flake.lock
+# Fill empty scions (git submodule update --init), and write graft's scions README and workflows
 [group('deps')]
 [positional-arguments]
 sync *args:
@@ -120,4 +123,4 @@ upgrade-obsidian *args:
 [group('migrations')]
 [positional-arguments]
 convert *args:
-    {{replace(kit_run, "{}", "convert")}} "$@"
+    {{replace(kit_run, "{}", "nb-convert")}} "$@"

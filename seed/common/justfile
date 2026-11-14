@@ -1,11 +1,12 @@
 # Operations for this workspace. Run `just` to list them; `just <recipe> --flag` passes flags through.
-# The kit's recipes (check, index, move, upgrade, ...) are read in place from the pinned scion.
+# The kit's recipes (check, index, move, upgrade, ...) are read in place from the kit's scion (a git submodule).
 
 # Let the definitions below override the kit's variables and recipes.
 set allow-duplicate-variables
 set allow-duplicate-recipes
 
-import ".scions/notebook-kit/tools/kit.just"
+# `import?`: a fresh clone lists its own recipes before `git submodule update --init` fills .scions/.
+import? ".scions/notebook-kit/tools/kit.just"
 
 # `just` with no recipe runs the first one in this file: list the operations.
 [private]
