@@ -12,24 +12,28 @@ from pathlib import Path
 
 import yaml
 
+import kit_settings
+
 KIT = Path(__file__).resolve().parents[1]
 SEEDED = KIT / "seed/common/notebook/.obsidian"
 SEED_GITIGNORE = KIT / "seed/common/.gitignore"
 PINS = KIT / "docs/obsidian-plugins.json"
 DEFAULT_VAULT = "notebook"
 # The pinned release assets, one folder per plugin id, which the kit's Nix wiring fetches and checks against PINS
-# (nix/workspace.nix). Unset when a tool runs outside it.
+# (graft.nix). Unset when a tool runs outside it.
 PLUGIN_ASSETS_ENV = "OBSIDIAN_PLUGIN_ASSETS"
-# The workspace's declared Obsidian deviations, the `obsidian` argument to nix/workspace.nix as JSON. Unset when
-# the workspace declares none or a tool runs outside the kit's Nix wiring.
-WORKSPACE_ENV = "OBSIDIAN_WORKSPACE"
-# The CSS snippet rendered from `obsidian.identity`: stripe, optional label, and theme-aware accents.
+# The CSS snippet rendered from `obsidian.identity` in notebook-kit.yaml: stripe, optional label, and theme-aware
+# accents. A snippet with an earlier header is the kit's too.
 IDENTITY_SNIPPET = "vault-identity"
-IDENTITY_HEADER = "/* Rendered by notebook-kit upgrade-obsidian from obsidian.identity in the workspace's flake. */"
+IDENTITY_HEADER = "/* Rendered by notebook-kit upgrade-obsidian from obsidian.identity in notebook-kit.yaml. */"
+IDENTITY_HEADERS = (IDENTITY_HEADER,
+                    "/* Rendered by notebook-kit upgrade-obsidian from obsidian.identity in the workspace's flake. */")
 # Obsidian's in-app installer appends this to main.js; the pinned hashes are of the release assets.
 INSTALLER_SUFFIX = b"\n/* nosourcemap */"
-# Where kit versions kept the seeded settings inside the scion: v1.0 and later, then the same layouts under the
-# kit's earlier name (v0.2 to v0.7, then v0.1). An upgrade from notebook-conventions reads its old seed by git ref.
+# Where the seeded settings sit inside the kit: v0.2 and later, then v0.1.
+SEED_PATHS = ("seed/common/notebook/.obsidian", "seed/common/.obsidian")
+# Where copy-mode graft (v2.12 and earlier) committed them in the workspace: kit v1.x, then the same layouts under
+# the kit's earlier name (v0.2 to v0.7, then v0.1). An upgrade from notebook-conventions reads its old seed by git ref.
 SCION_SEED_PATHS = (".scions/notebook-kit/seed/common/notebook/.obsidian",
                     ".scions/notebook-kit/seed/common/.obsidian",
                     ".scions/notebook-conventions/seed/common/notebook/.obsidian",
@@ -61,14 +65,14 @@ def asset_matches(path: Path, sha256: str) -> bool:
     return hashlib.sha256(data).hexdigest() == sha256
 
 
-def workspace_config(path: Path | None = None) -> dict:
-    """The workspace's declared deviations: `settings` (settings file -> partial JSON) and `identity`."""
-    if path is None:
-        value = os.environ.get(WORKSPACE_ENV)
-        if not value:
-            return {}
-        path = Path(value)
-    config = json.loads(path.read_text())
+def workspace_config(root: Path) -> dict:
+    """The workspace's declared deviations, `obsidian` in its notebook-kit.yaml; {} without one."""
+    config = kit_settings.load(root).get("obsidian") or {}
+    return validate_declaration(config, f"{kit_settings.SETTINGS_FILE}: obsidian")
+
+
+def validate_declaration(config, path) -> dict:
+    """Check a declaration: `settings` (settings file -> partial JSON) and `identity`. `path` names it in errors."""
     if not isinstance(config, dict):
         raise ValueError(f"{path}: expected an object with `settings` and `identity`")
     unknown = sorted(set(config) - {"settings", "identity"})
@@ -249,16 +253,38 @@ def stale_root_settings(root: Path) -> Path | None:
     return path if path.is_dir() else None
 
 
+def _parse(text: str):
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return MISSING
+
+
 def base_seed(root: Path, ref: str, name: str):
-    """The kit's seeded copy of a settings file in the scion at a git ref, or MISSING."""
+    """The kit's seeded copy of a settings file as the workspace had it at a git ref, or MISSING.
+
+    The kit is a git submodule (graft v2.13.0 and later): the commit the workspace records for it at `ref`, read in
+    the submodule's own repository, which holds the release it had checked out before an upgrade. Before that, the
+    kit was copied into the workspace's own tree (SCION_SEED_PATHS).
+    """
+    for scions in kit_settings.scions_dirs(root):
+        for kit in ("notebook-kit", "notebook-conventions"):
+            scion = f"{scions}/{kit}" if scions != "." else kit
+            # "160000 commit <sha>\t<path>" for a submodule; a tree (copy mode) or nothing otherwise
+            entry = subprocess.run(["git", "-C", str(root), "ls-tree", ref, "--", scion],
+                                   capture_output=True, text=True).stdout.split()
+            if entry[1:2] != ["commit"] or not (root / scion / ".git").exists():
+                continue
+            for folder in SEED_PATHS:
+                proc = subprocess.run(["git", "-C", str(root / scion), "show", f"{entry[2]}:{folder}/{name}"],
+                                      capture_output=True, text=True)
+                if proc.returncode == 0:
+                    return _parse(proc.stdout)
     for folder in SCION_SEED_PATHS:
         proc = subprocess.run(["git", "-C", str(root), "show", f"{ref}:{folder}/{name}"],
                               capture_output=True, text=True)
         if proc.returncode == 0:
-            try:
-                return json.loads(proc.stdout)
-            except json.JSONDecodeError:
-                return MISSING
+            return _parse(proc.stdout)
     return MISSING
 
 

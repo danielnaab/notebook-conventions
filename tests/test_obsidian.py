@@ -404,7 +404,7 @@ if __name__ == "__main__":
 
 
 class DeclaredDeviationsTest(unittest.TestCase):
-    """The workspace's `obsidian` declaration (nix/workspace.nix), passed to the tools as JSON."""
+    """The workspace's `obsidian` declaration, in its notebook-kit.yaml."""
 
     CONFIG = {"settings": {"app.json": {"openBehavior": "file"}},
               "identity": {"accent": "#3366cc", "stripe": ["#3366cc", "#cc6633"]}}
@@ -423,14 +423,16 @@ class DeclaredDeviationsTest(unittest.TestCase):
         self.declare(self.CONFIG)
 
     def declare(self, config):
-        self.config_path = self.root / "obsidian-workspace.json"
-        self.config_path.write_text(json.dumps(config))
+        self.config = config
 
 
     def tool(self, script, *args, config=True):
-        env = {k: v for k, v in os.environ.items() if k not in (obs.WORKSPACE_ENV, obs.PLUGIN_ASSETS_ENV)}
+        env = {k: v for k, v in os.environ.items() if k != obs.PLUGIN_ASSETS_ENV}
+        settings = self.root / "notebook-kit.yaml"
         if config:
-            env[obs.WORKSPACE_ENV] = str(self.config_path)
+            settings.write_text(json.dumps({"obsidian": self.config}))  # JSON is YAML
+        else:
+            settings.unlink(missing_ok=True)
         extra = ["--allow-running", "--no-plugins"] if script == "upgrade-obsidian" else []
         return subprocess.run([sys.executable, str(KIT / f"tools/{script}.py"), "--root", str(self.root), *extra,
                                *args], capture_output=True, text=True, env=env)
@@ -488,4 +490,4 @@ class DeclaredDeviationsTest(unittest.TestCase):
             self.declare(config)
             proc = self.tool("check-obsidian")
             self.assertNotEqual(0, proc.returncode, config)
-            self.assertIn("obsidian declaration", proc.stderr)
+            self.assertIn("notebook-kit.yaml: obsidian", proc.stderr)

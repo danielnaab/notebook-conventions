@@ -15,6 +15,7 @@ from urllib.parse import unquote
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import kit_settings  # noqa: E402
 import vault  # noqa: E402
 
 STATUSES = {"ready", "in-progress", "waiting", "later", "completed", "canceled"}
@@ -227,6 +228,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Workspace root (default: cwd)")
     args = parser.parse_args()
+    try:
+        settings = kit_settings.load(args.root)
+    except ValueError as error:
+        print(f"check-tasks: {error}", file=sys.stderr)
+        return 2
+    if settings.get("tasks") is False:
+        print(f"Task validation: skipped (tasks: false in {kit_settings.SETTINGS_FILE}).")
+        return 0
     errors = validate(args.root)
     for message in errors:
         print(message)

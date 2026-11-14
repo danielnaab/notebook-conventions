@@ -2,16 +2,16 @@
 """Upgrade a vault's shared Obsidian settings to the kit's seeded copies, keeping the workspace's own changes.
 
 The seed's `notebook/.obsidian/` files are copied once; this applies later kit changes to them. For each seeded
-settings file it merges three versions: the seed in the scion at a base git ref (the kit version the workspace
-had), the seed in the current scion, and the vault's copy. A kit change applies where the vault still has the old
-value; where the workspace changed the same setting, its value is kept and reported. Files the vault lacks are
+settings file it merges three versions: the seed at a base git ref (the kit release the workspace recorded then,
+read from the kit's git submodule), the seed in the current scion, and the vault's copy. A kit change applies where
+the vault still has the old value; where the workspace changed the same setting, its value is kept and reported. Files the vault lacks are
 created. It also adds the seed's `.gitignore` exceptions for plugin settings, and installs the pinned community
 plugins (docs/obsidian-plugins.json) that the vault enables: each one missing or not matching its pin gets the
 release's `main.js`, `manifest.json`, and `styles.css`, and its `data.json` is left alone. A plugin the vault's
 `community-plugins.json` does not list is never installed, so removing it there opts the workspace out.
 
-A workspace declares its deliberate deviations in its flake (the `obsidian` argument to nix/workspace.nix), which
-reaches this tool as $OBSIDIAN_WORKSPACE. They are applied last, so they win over both the kit and the vault:
+A workspace declares its deliberate deviations in `obsidian` in its notebook-kit.yaml (docs/obsidian.md), read
+from --root. They are applied last, so they win over both the kit and the vault:
 `settings` overlays the named files, and `identity` renders and enables the `vault-identity` CSS snippet: a thin
 window stripe, optional desktop status-bar label, and optional light/dark accents. Removing the identity removes
 its snippet; changing or removing a label or the variants regenerates it.
@@ -135,7 +135,7 @@ def upgrade_identity(settings: Path, config: dict, dry_run: bool) -> list[str]:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(css)
         return [f"{verb} {name}"]
-    if not path.is_file() or not path.read_text().startswith(obs.IDENTITY_HEADER):
+    if not path.is_file() or not path.read_text().startswith(obs.IDENTITY_HEADERS):
         return []
     lines = [f"remove   {name}"]
     appearance = settings / "appearance.json"
@@ -239,9 +239,9 @@ def main() -> int:
     if not (root / obs.vault_folder(root)).is_dir():
         sys.exit(f"upgrade-obsidian: no {obs.vault_folder(root)}/ here; run from the workspace root")
     try:
-        config = obs.workspace_config()
+        config = obs.workspace_config(root)
     except (OSError, ValueError) as error:
-        sys.exit(f"upgrade-obsidian: the workspace's obsidian declaration: {error}")
+        sys.exit(f"upgrade-obsidian: {error}")
     options = {"plugins": not args.no_plugins, "assets": obs.plugin_assets(), "config": config}
     # Plan first: a running Obsidian matters only if something would be written (settings, .gitignore, plugins).
     report = upgrade(root, args.base, dry_run=True, **options)

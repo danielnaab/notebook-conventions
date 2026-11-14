@@ -3,8 +3,8 @@
 
 The seed's `notebook/.obsidian/` files are copied once; `upgrade-obsidian` applies later kit changes to them.
 This read-only check compares each seeded settings file with the vault's copy as JSON (Obsidian rewrites
-formatting) and lists it as same, changed, or missing. A workspace declares its deliberate deviations in its
-flake (the `obsidian` argument to nix/workspace.nix): the check compares against the seed with those applied, marks
+formatting) and lists it as same, changed, or missing. A workspace declares its deliberate deviations in
+`obsidian` in its notebook-kit.yaml: the check compares against the seed with those applied, marks
 a file that carries them `(declared: ...)`, and checks the identity snippet they render. Changed is not an error: a
 workspace may adapt a setting without declaring it. It also lists each pinned community plugin's installed state from
 docs/obsidian-plugins.json; `upgrade-obsidian` installs them, and their state never affects the exit code.
@@ -36,7 +36,7 @@ def describe(kit_value, local_value) -> str:
 
 def compare_settings(root: Path, seeded: Path = SEEDED, config: dict | None = None) -> list[tuple[str, str, str]]:
     vault = root / vault_folder(root) / ".obsidian"
-    declared = obs.declared_settings(obs.workspace_config() if config is None else config)
+    declared = obs.declared_settings(obs.workspace_config(root) if config is None else config)
     result = []
     for name in sorted({*obs.seeded_files(seeded), *declared}):
         local = vault / name
@@ -61,7 +61,7 @@ def compare_settings(root: Path, seeded: Path = SEEDED, config: dict | None = No
 
 def identity_state(root: Path, config: dict | None = None) -> tuple[str, str] | None:
     """The identity snippet's state, or None when the workspace declares no identity and none was rendered."""
-    css = obs.identity_css(obs.workspace_config() if config is None else config)
+    css = obs.identity_css(obs.workspace_config(root) if config is None else config)
     path = root / vault_folder(root) / ".obsidian/snippets" / f"{obs.IDENTITY_SNIPPET}.css"
     name = f"snippets/{obs.IDENTITY_SNIPPET}.css"
     if css is None:
@@ -98,9 +98,9 @@ def main() -> int:
     args = parser.parse_args()
     root = args.root.resolve()
     try:
-        config = obs.workspace_config()
+        config = obs.workspace_config(root)
     except (OSError, ValueError) as error:
-        sys.exit(f"check-obsidian: the workspace's obsidian declaration: {error}")
+        sys.exit(f"check-obsidian: {error}")
     settings = compare_settings(root, config=config)
     identity = identity_state(root, config)
     print(f"settings (kit seed + workspace declarations vs {vault_folder(root)}/.obsidian):")

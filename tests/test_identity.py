@@ -25,9 +25,8 @@ CONFIG = {"identity": {"label": "Workspace A", "accent": {"light": "#3366cc", "d
 class IdentityRendererTest(unittest.TestCase):
     def validate(self, config):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "declaration.json"
-            path.write_text(json.dumps(config))
-            return obs.workspace_config(path)
+            (Path(tmp) / "notebook-kit.yaml").write_text(json.dumps({"obsidian": config}))  # JSON is YAML
+            return obs.workspace_config(Path(tmp))
 
     def test_old_single_color_identity_is_byte_for_byte_unchanged(self):
         config = self.validate({"identity": {"accent": "#3366cc"}})
@@ -111,17 +110,16 @@ class IdentityLifecycleTest(unittest.TestCase):
         for args in (("init", "-q", "-b", "main"), ("add", "-A"),
                      ("-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-qm", "seed")):
             subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True)
-        self.config_path = self.root / "declaration.json"
+        self.config_path = self.root / "notebook-kit.yaml"
         self.css = self.settings / "snippets/vault-identity.css"
 
     def apply(self, config, dry_run=False):
-        self.config_path.write_text(json.dumps(config))
+        self.config_path.write_text(json.dumps({"obsidian": config}))
         return upgrade.upgrade(self.root, "HEAD", dry_run, plugins=False, config=config)
 
     def check(self):
-        env = {**os.environ, obs.WORKSPACE_ENV: str(self.config_path)}
         return subprocess.run([sys.executable, str(KIT / "tools/check-obsidian.py"), "--root", str(self.root),
-                               "--strict"], env=env, capture_output=True, text=True)
+                               "--strict"], capture_output=True, text=True)
 
     def snapshot(self):
         return {p.relative_to(self.settings): p.read_bytes() for p in self.settings.rglob("*") if p.is_file()}
