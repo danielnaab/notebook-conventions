@@ -45,7 +45,9 @@ Markdown in Obsidian.
   note, or commit message. Unlisted paths get conservative, documentation-only edits.
 - `.scions/` holds git submodules: other repositories at release tags. Read them; ask before editing one: a fix
   belongs in the provider (a branch in the scion), released, then taken with `just upgrade` (the kit's
-  [adoption guide](.scions/notebook-kit/docs/adoption.md)). Nix builds see an uncommitted scion edit only while
-  another tracked file is modified; `just check` (graft check) fails while a scion has edits or sits off a tag.
+  [adoption guide](.scions/notebook-kit/docs/adoption.md)). To build with a scion's uncommitted edits, new files
+  included, run `nix run .#graft -- try NAME`, build with the command it prints, then
+  `nix run .#graft -- try --stop`.
+  `just check` (graft check) fails while try is on, or while a scion has edits or sits off a release tag.
 - No publication, pushes, external messages, deployments, or destructive cleanup without explicit authorization.
 - Verify with `just check` (links, status, Sources, task records, indexes, Obsidian settings).
